@@ -1,7 +1,10 @@
 import { parse } from "@babel/parser";
-import traverse from "@babel/traverse";
-import generate from "@babel/generator";
+import traverseModule, { NodePath } from "@babel/traverse";
+import generateModule from "@babel/generator";
 import * as t from "@babel/types";
+
+const traverse: any = (traverseModule as unknown as { default?: typeof traverseModule }).default ?? traverseModule;
+const generate: any = (generateModule as unknown as { default?: typeof generateModule }).default ?? generateModule;
 
 export interface TransformResult {
   readonly code: string;
@@ -18,8 +21,8 @@ export function stripTrace(source: string, filename = "input.ts"): TransformResu
   let removedCalls = 0;
 
   traverse(ast, {
-    Program(path) {
-      const traceBindings = path.scope.bindings.trace;
+    Program(path: NodePath<t.Program>) {
+      const traceBindings = path.scope.bindings['trace'];
       const traceImport = traceBindings?.path;
       if (!traceBindings) return;
 
@@ -50,7 +53,7 @@ export function stripTrace(source: string, filename = "input.ts"): TransformResu
   });
 
   traverse(ast, {
-    enter(path) {
+    enter(path: NodePath<t.Program>) {
       if (removals.has(path.node)) path.remove();
     },
   });
