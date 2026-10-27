@@ -125,3 +125,14 @@ export interface Options { readonly callback?: Callback }`;
     expect(() => stripTraceDeclarations(source)).toThrow(/trace type TraceSink remains/);
   });
 });
+
+describe("stripTraceDeclarations", () => {
+  it("removes trace-only parameters from function declarations", () => {
+    const input = `import type { TraceSink } from "#trace";
+export declare function detectSortedRuns<T>(values: readonly T[], compare: (a: T, b: T) => number, onTrace?: TraceSink<unknown>): readonly T[];`;
+    const result = stripTraceDeclarations(input, "merge/index.d.ts");
+    expect(result.code).not.toContain("TraceSink");
+    expect(result.code).toContain("compare: (a: T, b: T) => number");
+    expect(result.code).not.toContain("onTrace");
+  });
+});

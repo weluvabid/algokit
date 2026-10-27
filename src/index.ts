@@ -6,3 +6,5 @@ export * from "#bloom-filter";
 export * from "#hyperloglog";
 export * from "#consistent-hashing";
 export * from "#rendezvous-hashing";
+export * from "#binary-search";
+export * from "#merge";

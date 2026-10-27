@@ -14,7 +14,9 @@
     "./bloom-filter": "./dist/bloom-filter/index.js",
     "./hyperloglog": "./dist/hyperloglog/index.js",
     "./consistent-hashing": "./dist/consistent-hashing/index.js",
-    "./rendezvous-hashing": "./dist/rendezvous-hashing/index.js"
+    "./rendezvous-hashing": "./dist/rendezvous-hashing/index.js",
+    "./binary-search": "./dist/binary-search/index.js",
+    "./merge": "./dist/merge/index.js"
   },
   "files": [
     "dist",
@@ -104,6 +106,16 @@
       "types": "./src/rendezvous-hashing/index.ts",
       "development": "./src/rendezvous-hashing/index.ts",
       "default": "./dist/rendezvous-hashing/index.js"
+    },
+    "#binary-search": {
+      "types": "./src/binary-search/index.ts",
+      "development": "./src/binary-search/index.ts",
+      "default": "./dist/binary-search/index.js"
+    },
+    "#merge": {
+      "types": "./src/merge/index.ts",
+      "development": "./src/merge/index.ts",
+      "default": "./dist/merge/index.js"
     }
   }
 }

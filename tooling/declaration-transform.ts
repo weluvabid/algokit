@@ -193,6 +193,23 @@ export function stripTraceDeclarations(
         if (ts.isTypeAliasDeclaration(node) && removedDeclarations.has(node.name.text)) {
           return undefined;
         }
+        if (ts.isFunctionDeclaration(node)) {
+          // Preserve ordinary parameters whose option types can be sanitized
+          // by removing trace-only members from their declarations.
+          const parameters = node.parameters.filter(
+            (parameter) => ![...typeReferenceNames(parameter)].some((name) => traceNames.has(name)),
+          );
+          return context.factory.updateFunctionDeclaration(
+            node,
+            node.modifiers,
+            node.asteriskToken,
+            node.name,
+            node.typeParameters,
+            parameters,
+            node.type,
+            node.body,
+          );
+        }
         if (ts.isTypeLiteralNode(node)) {
           return context.factory.updateTypeLiteralNode(
             node,
