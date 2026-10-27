@@ -76,15 +76,7 @@ export function aStar(
     trace.emit(options.onTrace, { type: "expand", node: current.node, g: current.g, f: current.f });
 
     if (current.node === goal) {
-      const path = [goal];
-      let node = goal;
-      while (node !== start) {
-        const parent = previous.get(node);
-        if (parent === undefined) throw new Error("Broken predecessor chain");
-        path.push(parent);
-        node = parent;
-      }
-      path.reverse();
+      const path = reconstructPath(previous, start, goal);
       trace.emit(options.onTrace, { type: "finish", node: goal, g: current.g, f: current.f });
       return { path, cost: current.g, expanded };
     }
@@ -240,15 +232,7 @@ export function dijkstra(
     expanded++;
     trace.emit(options.onTrace, { type: "expand", node: current.node, cost: current.cost });
     if (current.node === goal) {
-      const path = [goal];
-      let node = goal;
-      while (node !== start) {
-        const parent = previous.get(node);
-        if (parent === undefined) throw new Error("Broken predecessor chain");
-        path.push(parent);
-        node = parent;
-      }
-      path.reverse();
+      const path = reconstructPath(previous, start, goal);
       trace.emit(options.onTrace, { type: "finish", node: goal, cost: current.cost });
       return { path, cost: current.cost, expanded };
     }
@@ -274,6 +258,23 @@ export function dijkstra(
   }
 
   return { path: null, cost: Infinity, expanded };
+}
+
+function reconstructPath(
+  previous: ReadonlyMap<string, string>,
+  start: string,
+  goal: string,
+): string[] {
+  const path = [goal];
+  let node = goal;
+  while (node !== start) {
+    const parent = previous.get(node);
+    if (parent === undefined) throw new Error("Broken predecessor chain");
+    path.push(parent);
+    node = parent;
+  }
+  path.reverse();
+  return path;
 }
 
 function graphNodes(graph: Graph): Set<string> {

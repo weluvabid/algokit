@@ -25,3 +25,8 @@ pnpm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# Generated benchmark output
+benchmarks/*.js
+benchmarks/*.js.map
+benchmarks/*.d.ts

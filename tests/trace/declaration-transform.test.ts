@@ -136,3 +136,54 @@ export declare function detectSortedRuns<T>(values: readonly T[], compare: (a: T
     expect(result.code).not.toContain("onTrace");
   });
 });
+
+describe("declaration transform adversarial cases", () => {
+  it("handles namespace and aliased trace imports", () => {
+    const source = `import type * as Trace from "#trace";
+export interface Options {
+  readonly onTrace?: Trace.TraceSink<string>;
+  readonly enabled: boolean;
+}`;
+    const result = stripTraceDeclarations(source);
+    expect(result.code).toContain("enabled: boolean");
+    expect(result.code).not.toContain("Trace.TraceSink");
+    expect(result.code).not.toContain('from "#trace"');
+  });
+
+  it("removes trace-only declarations through multiple alias layers", () => {
+    const source = `import type { TraceSink as Sink } from "#trace";
+type Callback = Sink<{ readonly value: number }>;
+type CallbackOptions = { readonly callback?: Callback };
+export interface Options {
+  readonly onTrace?: CallbackOptions["callback"];
+  readonly label: string;
+}`;
+    const result = stripTraceDeclarations(source);
+    expect(result.code).toContain("label: string");
+    expect(result.code).not.toContain("Callback");
+    expect(result.code).not.toContain("Sink");
+    expect(result.code).not.toContain('from "#trace"');
+  });
+
+  it("fails closed when a trace type is used by a public function return type", () => {
+    const source = `import type { TraceSink } from "#trace";
+export declare function createSink(): TraceSink<string>;`;
+    expect(() => stripTraceDeclarations(source)).toThrow(/trace type TraceSink remains/);
+  });
+
+  it("preserves unrelated declarations when trace members are removed", () => {
+    const source = `import type { TraceSink } from "#trace";
+export interface Payload { readonly value: number }
+export interface Options {
+  readonly onTrace?: TraceSink<Payload>;
+  readonly payload?: Payload;
+}
+export type PayloadList = readonly Payload[];
+`;
+    const result = stripTraceDeclarations(source);
+    expect(result.code).toContain("interface Payload");
+    expect(result.code).toContain("payload?: Payload");
+    expect(result.code).toContain("type PayloadList = readonly Payload[]");
+    expect(result.code).not.toContain("TraceSink");
+  });
+});
