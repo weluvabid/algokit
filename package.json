@@ -8,7 +8,9 @@
     "./priority-queue": "./dist/priority-queue/index.js",
     "./graph": "./dist/graph/index.js",
     "./trace": "./dist-trace/trace/index.js",
-    "./trace-build/graph": "./dist-trace/graph/index.js"
+    "./trace-build/graph": "./dist-trace/graph/index.js",
+    "./ordered-tree": "./dist/ordered-tree/index.js",
+    "./implicit-treap": "./dist/implicit-treap/index.js"
   },
   "files": [
     "dist",
@@ -68,6 +70,16 @@
       "types": "./src/trace/*.ts",
       "development": "./src/trace/*.ts",
       "default": "./dist-trace/trace/*.js"
+    },
+    "#ordered-tree": {
+      "types": "./src/ordered-tree/index.ts",
+      "development": "./src/ordered-tree/index.ts",
+      "default": "./dist/ordered-tree/index.js"
+    },
+    "#implicit-treap": {
+      "types": "./src/implicit-treap/index.ts",
+      "development": "./src/implicit-treap/index.ts",
+      "default": "./dist/implicit-treap/index.js"
     }
   }
 }
