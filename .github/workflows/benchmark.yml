@@ -1,0 +1,38 @@
+name: Benchmarks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 5 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run benchmarks
+        run: npm run bench -- --json=benchmark-results/results.json
+        env:
+          BENCH_SAMPLES: 7
+          BENCH_ITERATIONS: 20
+          BENCH_WARMUPS: 3
+      - name: Upload benchmark results
+        if: always() && hashFiles('benchmark-results/results.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: algokit-benchmarks-${{ github.sha }}
+          path: benchmark-results/results.json
+          if-no-files-found: error
+          retention-days: 90
