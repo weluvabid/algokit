@@ -8,6 +8,12 @@
     "rootDir": ".",
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "tooling/**/*.ts", "tests/**/*.ts", "vitest.config.ts"],
+  "include": [
+    "src/**/*.ts",
+    "tooling/**/*.ts",
+    "tests/**/*.ts",
+    "vitest.config.ts",
+    "benchmarks/**/*.ts"
+  ],
   "exclude": ["node_modules", "dist", "dist-trace", ".algokit-build"]
 }

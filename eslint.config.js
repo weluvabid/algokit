@@ -4,7 +4,14 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["dist/**", "dist-trace/**", ".algokit-build/**", "coverage/**", "node_modules/**"],
+    ignores: [
+      "dist/**",
+      "dist-trace/**",
+      ".algokit-build/**",
+      "coverage/**",
+      "node_modules/**",
+      "**/*.d.ts",
+    ],
   },
   {
     files: ["**/*.ts"],
