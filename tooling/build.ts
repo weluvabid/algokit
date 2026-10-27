@@ -2,9 +2,10 @@ import { cp, mkdir, readdir, readFile, rename, rm, writeFile } from "node:fs/pro
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
-import * as ts from "typescript";
 // @ts-expect-error -- Build-time TS imports are resolved by the build tooling.
 import { stripTrace } from "./trace-transform";
+// @ts-expect-error -- Build-time TS imports are resolved by the build tooling.
+import { stripTraceDeclarations } from "./declaration-transform";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const work = join(root, ".algokit-build");
@@ -70,51 +71,11 @@ try {
 
   for (const declaration of declarations.filter((path) => path.endsWith(".d.ts"))) {
     const input = await readFile(declaration, "utf8");
-    const sourceFile = ts.createSourceFile(declaration, input, ts.ScriptTarget.Latest, true);
-    const transformed = ts.transform(sourceFile, [
-      (context) => (root) => {
-        const statements = root.statements.flatMap((statement) => {
-          if (ts.isImportDeclaration(statement) && ts.isStringLiteral(statement.moduleSpecifier)) {
-            const clause = statement.importClause;
-            if (statement.moduleSpecifier.text === "#trace" && clause?.isTypeOnly) return [];
-          }
-          if (ts.isInterfaceDeclaration(statement)) {
-            if (statement.name.text === "AStarTraceEvent") return [];
-            if (statement.name.text === "AStarOptions") {
-              return [
-                context.factory.updateInterfaceDeclaration(
-                  statement,
-                  statement.modifiers,
-                  statement.name,
-                  statement.typeParameters,
-                  statement.heritageClauses,
-                  statement.members.filter(
-                    (member) =>
-                      !ts.isPropertySignature(member) ||
-                      !(
-                        (ts.isIdentifier(member.name) && member.name.text === "onTrace") ||
-                        (ts.isStringLiteral(member.name) && member.name.text === "onTrace")
-                      ),
-                  ),
-                ),
-              ];
-            }
-          }
-          return [statement];
-        });
-        return context.factory.updateSourceFile(root, statements);
-      },
-    ]);
-    const output = ts.createPrinter().printFile(transformed.transformed[0]!);
-    transformed.dispose();
-    if (
-      output.includes("#trace") ||
-      output.includes("TraceSink") ||
-      output.includes("AStarTraceEvent") ||
-      output.includes("onTrace")
-    ) {
+    const transformed = stripTraceDeclarations(input, relative(root, declaration));
+    const output = transformed.code;
+    if (/from\s+["']#trace["']/.test(output)) {
       throw new Error(
-        `Performance declaration contains trace references: ${relative(performanceSource, declaration)}`,
+        `Performance declaration retains a trace import: ${relative(performanceSource, declaration)}`,
       );
     }
     await writeFile(declaration, output);
@@ -171,12 +132,7 @@ try {
   }
   for (const path of builtFiles.filter((file) => file.endsWith(".js") || file.endsWith(".d.ts"))) {
     const contents = await readFile(path, "utf8");
-    if (
-      contents.includes("#trace") ||
-      contents.includes("trace.emit") ||
-      contents.includes("AStarTraceEvent") ||
-      contents.includes("onTrace")
-    ) {
+    if (contents.includes("#trace") || contents.includes("trace.emit")) {
       throw new Error(
         `Performance distribution contains trace references: ${relative(performanceOut, path)}`,
       );

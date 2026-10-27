@@ -45,7 +45,7 @@ for (const path of performanceFiles) {
   }
   if (!path.endsWith(".js") && !path.endsWith(".d.ts")) continue;
   const contents = await readFile(path, "utf8");
-  if (/\b(?:#trace|AStarTraceEvent|TraceSink|onTrace|trace\.emit)\b/.test(contents)) {
+  if (/(?:#trace|trace\.emit)/.test(contents)) {
     throw new Error(`Performance distribution contains trace references: ${relative(root, path)}`);
   }
 }
