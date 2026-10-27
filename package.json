@@ -7,7 +7,7 @@
     ".": "./dist/index.js",
     "./priority-queue": "./dist/priority-queue/index.js",
     "./graph": "./dist/graph/index.js",
-    "./trace": "./dist/trace/index.js",
+    "./trace": "./dist-trace/trace/index.js",
     "./trace-build/graph": "./dist-trace/graph/index.js"
   },
   "files": [
@@ -49,12 +49,12 @@
     "#trace": {
       "types": "./src/trace/index.ts",
       "development": "./src/trace/index.ts",
-      "default": "./dist/trace/index.js"
+      "default": "./dist-trace/trace/index.js"
     },
     "#trace/*": {
       "types": "./src/trace/*.ts",
       "development": "./src/trace/*.ts",
-      "default": "./dist/trace/*.js"
+      "default": "./dist-trace/trace/*.js"
     }
   }
 }
