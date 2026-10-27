@@ -33,8 +33,9 @@
     "test:watch": "NODE_OPTIONS=--conditions=development vitest",
     "test:coverage": "NODE_OPTIONS=--conditions=development vitest run --coverage",
     "check:package": "tsx tooling/check-package.ts",
-    "check": "npm run format:check && npm run lint && npm run typecheck:all && npm run test && npm run build && npm run check:package",
-    "bench": "vitest bench"
+    "check": "npm run format:check && npm run lint && npm run typecheck:all && npm test && npm run build && npm run check:package && npm run check:consumer",
+    "bench": "vitest bench",
+    "check:consumer": "tsx tooling/check-consumer.ts"
   },
   "devDependencies": {
     "@babel/generator": "^7.28.3",
