@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-// @ts-expect-error -- Build-time TS imports are resolved by the build tooling.
-import { stripTrace } from "../../tooling/trace-transform";
+import { stripTrace } from "../../tooling/trace-transform/index.js";
 
 describe("stripTrace", () => {
   it("removes namespace trace calls and their import", () => {

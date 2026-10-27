@@ -32,24 +32,5 @@ export default tseslint.config(
       "@typescript-eslint/no-misused-promises": "error",
     },
   },
-  {
-    files: ["tooling/trace-transform/index.ts", "tooling/build.ts"],
-    rules: {
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unsafe-call": "off",
-      "@typescript-eslint/no-unsafe-assignment": "off",
-      "@typescript-eslint/no-unsafe-member-access": "off",
-      "@typescript-eslint/no-unnecessary-type-assertion": "off",
-    },
-  },
-  {
-    files: ["tests/trace/trace-transform.test.ts", "tests/build/trace-equivalence.test.ts"],
-    rules: {
-      "@typescript-eslint/no-unsafe-call": "off",
-      "@typescript-eslint/no-unsafe-assignment": "off",
-      "@typescript-eslint/no-unsafe-member-access": "off",
-      "@typescript-eslint/no-unsafe-return": "off",
-    },
-  },
   prettier,
 );

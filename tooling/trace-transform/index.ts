@@ -4,10 +4,14 @@ import traverseModule from "@babel/traverse";
 import generateModule from "@babel/generator";
 import type * as t from "@babel/types";
 
-const traverse: any =
-  (traverseModule as unknown as { default?: typeof traverseModule }).default ?? traverseModule;
-const generate: any =
-  (generateModule as unknown as { default?: typeof generateModule }).default ?? generateModule;
+// Safely extract the exact function type from the module definition
+type TraverseFn = typeof traverseModule extends { default: infer T } ? T : typeof traverseModule;
+type GenerateFn = typeof generateModule extends { default: infer T } ? T : typeof generateModule;
+
+const traverse: TraverseFn = ((traverseModule as unknown as { default?: TraverseFn }).default ??
+  traverseModule) as TraverseFn;
+const generate: GenerateFn = ((generateModule as unknown as { default?: GenerateFn }).default ??
+  generateModule) as GenerateFn;
 
 export interface TransformResult {
   readonly code: string;
@@ -51,12 +55,12 @@ export function stripTrace(source: string, filename = "input.ts"): TransformResu
         removedCalls++;
       }
 
-      removals.add(traceImport.parentPath!.node);
+      removals.add(traceImport.parentPath.node);
     },
   });
 
   traverse(ast, {
-    enter(path: NodePath<t.Program>) {
+    enter(path) {
       if (removals.has(path.node)) path.remove();
     },
   });

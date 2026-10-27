@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readFile } from "node:fs/promises";
-// @ts-expect-error -- Build-time TS imports are resolved by the build tooling.
-import { stripTrace } from "../../tooling/trace-transform";
+import { stripTrace } from "../../tooling/trace-transform/index.js";
 
 describe("performance transform proof of concept", () => {
   it("strips instrumentation without changing computational statements", async () => {

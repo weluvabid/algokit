@@ -2,10 +2,8 @@ import { cp, mkdir, readdir, readFile, rename, rm, writeFile } from "node:fs/pro
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
-// @ts-expect-error -- Build-time TS imports are resolved by the build tooling.
-import { stripTrace } from "./trace-transform";
-// @ts-expect-error -- Build-time TS imports are resolved by the build tooling.
-import { stripTraceDeclarations } from "./declaration-transform";
+import { stripTrace } from "./trace-transform/index.js";
+import { stripTraceDeclarations } from "./declaration-transform.js";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const work = join(root, ".algokit-build");
@@ -35,7 +33,17 @@ try {
   await import("node:child_process").then(({ execFileSync }) => {
     execFileSync(
       "npx",
-      ["tsc", "-p", "tsconfig.json", "--outDir", source, "--declarationMap", "false"],
+      [
+        "tsc",
+        "-p",
+        "tsconfig.json",
+        "--rootDir",
+        "src",
+        "--outDir",
+        source,
+        "--declarationMap",
+        "false",
+      ],
       {
         cwd: root,
         stdio: "inherit",
