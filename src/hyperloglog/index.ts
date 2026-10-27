@@ -57,6 +57,9 @@ export class HyperLogLog {
 }
 
 function leadingZeros64(value: bigint): number {
-  if (value === 0n) return 64;
-  return 64 - value.toString(2).length;
+  const upper = Number((value >> 32n) & 0xffffffffn);
+  if (upper !== 0) return Math.clz32(upper);
+
+  const lower = Number(value & 0xffffffffn);
+  return 32 + Math.clz32(lower);
 }

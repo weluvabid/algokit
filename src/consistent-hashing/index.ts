@@ -39,11 +39,13 @@ export class ConsistentHashing {
   addNode(node: string): void {
     if (node.length === 0) throw new RangeError("node must not be empty");
     if (this.#nodes.has(node)) return;
-    this.#nodes.add(node);
+    const entries: RingEntry[] = [];
     for (let replica = 0; replica < this.virtualNodes; replica++) {
-      this.#ring.push({ hash: hash64Parts(node, String(replica)), node });
+      entries.push({ hash: hash64Parts(node, String(replica)), node });
     }
-    this.#ring.sort((a, b) => compareBigInt(a.hash, b.hash) || compareString(a.node, b.node));
+    entries.sort(compareRingEntries);
+    this.#ring = mergeRingEntries(this.#ring, entries);
+    this.#nodes.add(node);
     trace.emit(this.#onTrace, { type: "node-added", node, ringSize: this.#ring.length });
   }
 
@@ -70,6 +72,29 @@ export class ConsistentHashing {
   nodes(): string[] {
     return [...this.#nodes].sort(compareString);
   }
+}
+
+function compareRingEntries(a: RingEntry, b: RingEntry): number {
+  return compareBigInt(a.hash, b.hash) || compareString(a.node, b.node);
+}
+
+function mergeRingEntries(existing: RingEntry[], added: RingEntry[]): RingEntry[] {
+  const merged = new Array<RingEntry>(existing.length + added.length);
+  let left = 0;
+  let right = 0;
+  let output = 0;
+
+  while (left < existing.length && right < added.length) {
+    if (compareRingEntries(existing[left]!, added[right]!) <= 0) {
+      merged[output++] = existing[left++]!;
+    } else {
+      merged[output++] = added[right++]!;
+    }
+  }
+
+  while (left < existing.length) merged[output++] = existing[left++]!;
+  while (right < added.length) merged[output++] = added[right++]!;
+  return merged;
 }
 
 function compareBigInt(a: bigint, b: bigint): number {

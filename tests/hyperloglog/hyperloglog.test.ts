@@ -25,6 +25,15 @@ describe("HyperLogLog", () => {
     expect(() => new HyperLogLog({ precision: 17 })).toThrow(RangeError);
   });
 
+  it("handles hashes whose register remainder has leading zero words", () => {
+    for (const precision of [4, 8, 12, 16]) {
+      const hll = new HyperLogLog({ precision });
+      for (let index = 0; index < 2_000; index++) hll.add(`leading-zero-case-${index}`);
+      expect(Number.isFinite(hll.estimate())).toBe(true);
+      expect(hll.estimate()).toBeGreaterThan(0);
+    }
+  });
+
   it("is deterministic and insensitive to repeated values", () => {
     const first = new HyperLogLog({ precision: 10 });
     const second = new HyperLogLog({ precision: 10 });

@@ -15,6 +15,7 @@ export class BloomFilter {
   readonly #bits: Uint8Array;
   readonly #onTrace: BloomFilterOptions["onTrace"];
   #itemsAdded = 0;
+  #bitsSet = 0;
 
   constructor(options: BloomFilterOptions) {
     const { expectedItems, falsePositiveRate } = options;
@@ -42,7 +43,10 @@ export class BloomFilter {
     for (let i = 0; i < this.hashCount; i++) {
       const index = Number((first + BigInt(i) * second) % BigInt(this.bitCount));
       const byteIndex = index >>> 3;
-      this.#bits[byteIndex] = this.#bits[byteIndex]! | (1 << (index & 7));
+      const mask = 1 << (index & 7);
+      const previous = this.#bits[byteIndex]!;
+      if ((previous & mask) === 0) this.#bitsSet++;
+      this.#bits[byteIndex] = previous | mask;
     }
     this.#itemsAdded++;
     trace.emit(this.#onTrace, { type: "add", bitsSet: this.bitCountSet });
@@ -58,14 +62,7 @@ export class BloomFilter {
   }
 
   get bitCountSet(): number {
-    let count = 0;
-    for (let byte of this.#bits) {
-      while (byte !== 0) {
-        byte &= byte - 1;
-        count++;
-      }
-    }
-    return count;
+    return this.#bitsSet;
   }
 
   #hashPair(value: string | Uint8Array): [bigint, bigint] {

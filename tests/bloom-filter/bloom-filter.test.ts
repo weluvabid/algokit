@@ -59,6 +59,21 @@ describe("BloomFilter", () => {
     expect(events[1]?.bitsSet).toBe(events[0]?.bitsSet);
   });
 
+  it("tracks newly occupied bits exactly across overlapping insertions", () => {
+    const filter = new BloomFilter({ expectedItems: 20, falsePositiveRate: 0.1 });
+    filter.add("alpha");
+    const firstCount = filter.bitCountSet;
+    expect(firstCount).toBeGreaterThan(0);
+    expect(firstCount).toBeLessThanOrEqual(filter.hashCount);
+
+    filter.add("alpha");
+    expect(filter.bitCountSet).toBe(firstCount);
+
+    filter.add("beta");
+    expect(filter.bitCountSet).toBeGreaterThanOrEqual(firstCount);
+    expect(filter.bitCountSet).toBeLessThanOrEqual(filter.bitCount);
+  });
+
   it("handles empty, Unicode, and delimiter-like strings", () => {
     const filter = new BloomFilter({ expectedItems: 8, falsePositiveRate: 0.01 });
     const values = ["", "café", "🧪", "\\0", "a|b", "a:b"];
