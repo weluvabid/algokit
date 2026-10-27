@@ -73,35 +73,50 @@ try {
     const sourceFile = ts.createSourceFile(declaration, input, ts.ScriptTarget.Latest, true);
     const transformed = ts.transform(sourceFile, [
       (context) => (root) => {
-        const statements = root.statements.filter((statement) => {
+        const statements = root.statements.flatMap((statement) => {
           if (ts.isImportDeclaration(statement) && ts.isStringLiteral(statement.moduleSpecifier)) {
             const clause = statement.importClause;
-            if (statement.moduleSpecifier.text === "#trace" && clause?.isTypeOnly) return false;
+            if (statement.moduleSpecifier.text === "#trace" && clause?.isTypeOnly) return [];
           }
           if (ts.isInterfaceDeclaration(statement)) {
-            if (statement.name.text === "AStarTraceEvent") return false;
+            if (statement.name.text === "AStarTraceEvent") return [];
             if (statement.name.text === "AStarOptions") {
-              return context.factory.updateInterfaceDeclaration(
-                statement,
-                statement.modifiers,
-                statement.name,
-                statement.typeParameters,
-                statement.heritageClauses,
-                statement.members.filter(
-                  (member) =>
-                    !ts.isPropertySignature(member) ||
-                    member.name.getText(sourceFile) !== "onTrace",
+              return [
+                context.factory.updateInterfaceDeclaration(
+                  statement,
+                  statement.modifiers,
+                  statement.name,
+                  statement.typeParameters,
+                  statement.heritageClauses,
+                  statement.members.filter(
+                    (member) =>
+                      !ts.isPropertySignature(member) ||
+                      !(
+                        (ts.isIdentifier(member.name) && member.name.text === "onTrace") ||
+                        (ts.isStringLiteral(member.name) && member.name.text === "onTrace")
+                      ),
+                  ),
                 ),
-              );
+              ];
             }
           }
-          return true;
+          return [statement];
         });
         return context.factory.updateSourceFile(root, statements);
       },
     ]);
     const output = ts.createPrinter().printFile(transformed.transformed[0]!);
     transformed.dispose();
+    if (
+      output.includes("#trace") ||
+      output.includes("TraceSink") ||
+      output.includes("AStarTraceEvent") ||
+      output.includes("onTrace")
+    ) {
+      throw new Error(
+        `Performance declaration contains trace references: ${relative(performanceSource, declaration)}`,
+      );
+    }
     await writeFile(declaration, output);
   }
 
@@ -114,6 +129,7 @@ try {
     target: "es2022",
     minify: true,
     sourcemap: "external",
+    sourcesContent: false,
     legalComments: "none",
     logLevel: "info",
   });
@@ -136,6 +152,7 @@ try {
     target: "es2022",
     minify: true,
     sourcemap: "external",
+    sourcesContent: false,
     legalComments: "none",
     logLevel: "info",
   });
