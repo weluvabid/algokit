@@ -1,9 +1,10 @@
-import { cp, mkdir, readdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 import { stripTrace } from "./trace-transform/index.js";
 import { stripTraceDeclarations } from "./declaration-transform.js";
+import { assertPerformanceDistribution, filesUnder } from "./fs-utils.js";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const work = join(root, ".algokit-build");
@@ -13,17 +14,6 @@ const performanceOut = join(work, "dist-next");
 const traceOut = join(work, "dist-trace-next");
 const distBackup = join(work, "dist-backup");
 const traceBackup = join(work, "dist-trace-backup");
-
-async function filesUnder(directory: string): Promise<string[]> {
-  const entries = await readdir(directory, { withFileTypes: true });
-  const files = await Promise.all(
-    entries.map(async (entry) => {
-      const path = join(directory, entry.name);
-      return entry.isDirectory() ? filesUnder(path) : [path];
-    }),
-  );
-  return files.flat();
-}
 
 await rm(work, { recursive: true, force: true });
 await mkdir(work, { recursive: true });
@@ -134,18 +124,7 @@ try {
   await rm(traceOut, { recursive: true, force: true });
   await rename(minifiedTrace, traceOut);
 
-  const builtFiles = await filesUnder(performanceOut);
-  if (builtFiles.some((path) => /(?:^|\/)trace(?:\/|\.|-)/i.test(relative(performanceOut, path)))) {
-    throw new Error("Performance distribution contains trace-related files");
-  }
-  for (const path of builtFiles.filter((file) => file.endsWith(".js") || file.endsWith(".d.ts"))) {
-    const contents = await readFile(path, "utf8");
-    if (contents.includes("#trace") || contents.includes("trace.emit")) {
-      throw new Error(
-        `Performance distribution contains trace references: ${relative(performanceOut, path)}`,
-      );
-    }
-  }
+  await assertPerformanceDistribution(performanceOut);
 
   const distPath = join(root, "dist");
   const tracePath = join(root, "dist-trace");

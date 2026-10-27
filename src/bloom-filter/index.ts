@@ -1,20 +1,11 @@
 import * as trace from "#trace";
 import type { TraceSink } from "#trace";
+import { hash64FNV1a } from "#hash64";
 
 export interface BloomFilterOptions {
   readonly expectedItems: number;
   readonly falsePositiveRate: number;
   readonly onTrace?: TraceSink<{ readonly type: "add"; readonly bitsSet: number }>;
-}
-
-function hash64(value: string | Uint8Array): bigint {
-  const bytes = typeof value === "string" ? new TextEncoder().encode(value) : value;
-  let hash = 0xcbf29ce484222325n;
-  for (const byte of bytes) {
-    hash ^= BigInt(byte);
-    hash = BigInt.asUintN(64, hash * 0x100000001b3n);
-  }
-  return hash;
 }
 
 /** A Bloom filter for strings and byte arrays; false positives are possible, false negatives are not. */
@@ -78,7 +69,7 @@ export class BloomFilter {
   }
 
   #hashPair(value: string | Uint8Array): [bigint, bigint] {
-    const hash = hash64(value);
+    const hash = hash64FNV1a(value);
     const first = hash & 0xffffffffn;
     const second = ((hash >> 32n) | 1n) & 0xffffffffn;
     return [first, second];

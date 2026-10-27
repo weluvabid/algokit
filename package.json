@@ -117,6 +117,11 @@
       "types": "./src/merge/index.ts",
       "development": "./src/merge/index.ts",
       "default": "./dist/merge/index.js"
+    },
+    "#hash64": {
+      "types": "./src/hash64/index.ts",
+      "development": "./src/hash64/index.ts",
+      "default": "./dist/hash64/index.js"
     }
   }
 }

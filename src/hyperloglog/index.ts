@@ -1,28 +1,11 @@
 import * as trace from "#trace";
 import type { TraceSink } from "#trace";
+import { hash64 } from "#hash64";
 
 export interface HyperLogLogOptions {
   /** Number of index bits. Higher precision uses more memory and improves accuracy. */
   readonly precision?: number;
   readonly onTrace?: TraceSink<{ readonly type: "add"; readonly estimate: number }>;
-}
-
-function hash64(value: string | Uint8Array): bigint {
-  const bytes = typeof value === "string" ? new TextEncoder().encode(value) : value;
-  let hash = 0xcbf29ce484222325n;
-
-  for (const byte of bytes) {
-    hash ^= BigInt(byte);
-    hash = BigInt.asUintN(64, hash * 0x100000001b3n);
-  }
-
-  hash ^= hash >> 30n;
-  hash = BigInt.asUintN(64, hash * 0xbf58476d1ce4e5b9n);
-  hash ^= hash >> 27n;
-  hash = BigInt.asUintN(64, hash * 0x94d049bb133111ebn);
-  hash ^= hash >> 31n;
-
-  return BigInt.asUintN(64, hash);
 }
 
 /** HyperLogLog cardinality estimator for strings and byte arrays. */
