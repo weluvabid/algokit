@@ -41,7 +41,8 @@ export function aStar(
   goal: string,
   options: AStarOptions,
 ): AStarResult {
-  if (!Number.isFinite(options.heuristic(start, goal))) {
+  const startHeuristic = options.heuristic(start, goal);
+  if (!Number.isFinite(startHeuristic)) {
     throw new RangeError("Heuristic must return a finite number");
   }
 
@@ -58,12 +59,12 @@ export function aStar(
   const frontier = new PriorityQueue<FrontierEntry>((a, b) => a.f - b.f || a.order - b.order);
   const distances = new Map<string, number>([[start, 0]]);
   const previous = new Map<string, string>();
-  frontier.push({ node: start, g: 0, f: options.heuristic(start, goal), order: order++ });
+  frontier.push({ node: start, g: 0, f: startHeuristic, order: order++ });
   trace.emit(options.onTrace, {
     type: "discover",
     node: start,
     g: 0,
-    f: options.heuristic(start, goal),
+    f: startHeuristic,
   });
   let expanded = 0;
 

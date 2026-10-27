@@ -2,6 +2,7 @@ import { cp, mkdir, readdir, readFile, rename, rm, writeFile } from "node:fs/pro
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
+import * as ts from "typescript";
 // @ts-expect-error -- Build-time TS imports are resolved by the build tooling.
 import { stripTrace } from "./trace-transform";
 
@@ -11,6 +12,8 @@ const source = join(work, "source");
 const performanceSource = join(work, "performance-source");
 const performanceOut = join(work, "dist-next");
 const traceOut = join(work, "dist-trace-next");
+const distBackup = join(work, "dist-backup");
+const traceBackup = join(work, "dist-trace-backup");
 
 async function filesUnder(directory: string): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -25,13 +28,18 @@ async function filesUnder(directory: string): Promise<string[]> {
 
 await rm(work, { recursive: true, force: true });
 await mkdir(work, { recursive: true });
+let preserveWork = false;
 
 try {
   await import("node:child_process").then(({ execFileSync }) => {
-    execFileSync("npx", ["tsc", "-p", "tsconfig.json", "--outDir", source], {
-      cwd: root,
-      stdio: "inherit",
-    });
+    execFileSync(
+      "npx",
+      ["tsc", "-p", "tsconfig.json", "--outDir", source, "--declarationMap", "false"],
+      {
+        cwd: root,
+        stdio: "inherit",
+      },
+    );
   });
 
   await cp(source, traceOut, { recursive: true });
@@ -60,13 +68,40 @@ try {
     throw new Error("Performance build did not remove any trace calls");
   }
 
-  for (const declaration of declarations) {
-    if (declaration.endsWith(".d.ts.map")) continue;
+  for (const declaration of declarations.filter((path) => path.endsWith(".d.ts"))) {
     const input = await readFile(declaration, "utf8");
-    const output = input
-      .replace(/^import\s+type\s+\{\s*TraceSink\s*\}\s+from\s+["']#trace["'];?\s*\n?/gm, "")
-      .replace(/^export interface AStarTraceEvent \{[\s\S]*?^\}\n?/m, "")
-      .replace(/^\s*readonly onTrace\?: TraceSink<AStarTraceEvent>;\n/gm, "");
+    const sourceFile = ts.createSourceFile(declaration, input, ts.ScriptTarget.Latest, true);
+    const transformed = ts.transform(sourceFile, [
+      (context) => (root) => {
+        const statements = root.statements.filter((statement) => {
+          if (ts.isImportDeclaration(statement) && ts.isStringLiteral(statement.moduleSpecifier)) {
+            const clause = statement.importClause;
+            if (statement.moduleSpecifier.text === "#trace" && clause?.isTypeOnly) return false;
+          }
+          if (ts.isInterfaceDeclaration(statement)) {
+            if (statement.name.text === "AStarTraceEvent") return false;
+            if (statement.name.text === "AStarOptions") {
+              return context.factory.updateInterfaceDeclaration(
+                statement,
+                statement.modifiers,
+                statement.name,
+                statement.typeParameters,
+                statement.heritageClauses,
+                statement.members.filter(
+                  (member) =>
+                    !ts.isPropertySignature(member) ||
+                    member.name.getText(sourceFile) !== "onTrace",
+                ),
+              );
+            }
+          }
+          return true;
+        });
+        return context.factory.updateSourceFile(root, statements);
+      },
+    ]);
+    const output = ts.createPrinter().printFile(transformed.transformed[0]!);
+    transformed.dispose();
     await writeFile(declaration, output);
   }
 
@@ -131,10 +166,46 @@ try {
     }
   }
 
-  await rm(join(root, "dist"), { recursive: true, force: true });
-  await rm(join(root, "dist-trace"), { recursive: true, force: true });
-  await rename(performanceOut, join(root, "dist"));
-  await rename(traceOut, join(root, "dist-trace"));
+  const distPath = join(root, "dist");
+  const tracePath = join(root, "dist-trace");
+  let backedUpDist = false;
+  let backedUpTrace = false;
+  let installedDist = false;
+  let installedTrace = false;
+  try {
+    try {
+      await rename(distPath, distBackup);
+      backedUpDist = true;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    }
+    try {
+      await rename(tracePath, traceBackup);
+      backedUpTrace = true;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    }
+    await rename(performanceOut, distPath);
+    installedDist = true;
+    await rename(traceOut, tracePath);
+    installedTrace = true;
+  } catch (error) {
+    try {
+      if (installedDist) await rm(distPath, { recursive: true, force: true });
+      if (installedTrace) await rm(tracePath, { recursive: true, force: true });
+      if (backedUpDist) await rename(distBackup, distPath);
+      if (backedUpTrace) await rename(traceBackup, tracePath);
+    } catch (rollbackError) {
+      preserveWork = true;
+      throw new AggregateError(
+        [error, rollbackError],
+        `Build replacement failed and rollback was incomplete; backups remain in ${work}`,
+      );
+    }
+    throw error;
+  }
+  await rm(distBackup, { recursive: true, force: true });
+  await rm(traceBackup, { recursive: true, force: true });
 } finally {
-  await rm(work, { recursive: true, force: true });
+  if (!preserveWork) await rm(work, { recursive: true, force: true });
 }
