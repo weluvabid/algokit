@@ -12,7 +12,9 @@
     "./ordered-tree": "./dist/ordered-tree/index.js",
     "./implicit-treap": "./dist/implicit-treap/index.js",
     "./bloom-filter": "./dist/bloom-filter/index.js",
-    "./hyperloglog": "./dist/hyperloglog/index.js"
+    "./hyperloglog": "./dist/hyperloglog/index.js",
+    "./consistent-hashing": "./dist/consistent-hashing/index.js",
+    "./rendezvous-hashing": "./dist/rendezvous-hashing/index.js"
   },
   "files": [
     "dist",
@@ -92,6 +94,16 @@
       "types": "./src/hyperloglog/index.ts",
       "development": "./src/hyperloglog/index.ts",
       "default": "./dist/hyperloglog/index.js"
+    },
+    "#consistent-hashing": {
+      "types": "./src/consistent-hashing/index.ts",
+      "development": "./src/consistent-hashing/index.ts",
+      "default": "./dist/consistent-hashing/index.js"
+    },
+    "#rendezvous-hashing": {
+      "types": "./src/rendezvous-hashing/index.ts",
+      "development": "./src/rendezvous-hashing/index.ts",
+      "default": "./dist/rendezvous-hashing/index.js"
     }
   }
 }
