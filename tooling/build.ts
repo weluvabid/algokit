@@ -1,8 +1,8 @@
 import { cp, mkdir, readdir, readFile, rename, rm, writeFile } from "node:fs/promises";
-import { join, relative, resolve } from "node:path";
+import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
-// @ts-ignore
+// @ts-expect-error -- Build-time TS imports are resolved by the build tooling.
 import { stripTrace } from "./trace-transform";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
@@ -14,10 +14,12 @@ const traceOut = join(work, "dist-trace-next");
 
 async function filesUnder(directory: string): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true });
-  const files = await Promise.all(entries.map(async (entry) => {
-    const path = join(directory, entry.name);
-    return entry.isDirectory() ? filesUnder(path) : [path];
-  }));
+  const files = await Promise.all(
+    entries.map(async (entry) => {
+      const path = join(directory, entry.name);
+      return entry.isDirectory() ? filesUnder(path) : [path];
+    }),
+  );
   return files.flat();
 }
 
@@ -39,7 +41,9 @@ try {
 
   const performanceFiles = await filesUnder(performanceSource);
   const performanceJavascript = performanceFiles.filter((path) => path.endsWith(".js"));
-  const declarations = performanceFiles.filter((path) => path.endsWith(".d.ts") || path.endsWith(".d.ts.map"));
+  const declarations = performanceFiles.filter(
+    (path) => path.endsWith(".d.ts") || path.endsWith(".d.ts.map"),
+  );
   let removedCalls = 0;
 
   for (const path of performanceJavascript) {
@@ -112,8 +116,15 @@ try {
   }
   for (const path of builtFiles.filter((file) => file.endsWith(".js") || file.endsWith(".d.ts"))) {
     const contents = await readFile(path, "utf8");
-    if (contents.includes("#trace") || contents.includes("trace.emit") || contents.includes("AStarTraceEvent") || contents.includes("onTrace")) {
-      throw new Error(`Performance distribution contains trace references: ${relative(performanceOut, path)}`);
+    if (
+      contents.includes("#trace") ||
+      contents.includes("trace.emit") ||
+      contents.includes("AStarTraceEvent") ||
+      contents.includes("onTrace")
+    ) {
+      throw new Error(
+        `Performance distribution contains trace references: ${relative(performanceOut, path)}`,
+      );
     }
   }
 

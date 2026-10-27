@@ -3,9 +3,21 @@ import { aStar, type AStarTraceEvent, type Graph } from "#graph";
 import { createTraceRecorder } from "#trace";
 
 const graph: Graph = new Map([
-  ["A", [{ to: "B", cost: 2 }, { to: "C", cost: 1 }]],
+  [
+    "A",
+    [
+      { to: "B", cost: 2 },
+      { to: "C", cost: 1 },
+    ],
+  ],
   ["B", [{ to: "D", cost: 2 }]],
-  ["C", [{ to: "B", cost: 0.5 }, { to: "D", cost: 8 }]],
+  [
+    "C",
+    [
+      { to: "B", cost: 0.5 },
+      { to: "D", cost: 8 },
+    ],
+  ],
   ["D", []],
 ]);
 const heuristic = () => 0;
@@ -26,6 +38,8 @@ describe("aStar", () => {
   });
 
   it("rejects negative edge costs", () => {
-    expect(() => aStar(new Map([["A", [{ to: "B", cost: -1 }]]]), "A", "B", { heuristic })).toThrow(RangeError);
+    expect(() => aStar(new Map([["A", [{ to: "B", cost: -1 }]]]), "A", "B", { heuristic })).toThrow(
+      RangeError,
+    );
   });
 });

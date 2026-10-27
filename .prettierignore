@@ -1,0 +1,6 @@
+node_modules/
+dist/
+dist-trace/
+.algokit-build/
+coverage/
+package-lock.json

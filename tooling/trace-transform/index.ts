@@ -1,10 +1,13 @@
 import { parse } from "@babel/parser";
-import traverseModule, { NodePath } from "@babel/traverse";
+import type { NodePath } from "@babel/traverse";
+import traverseModule from "@babel/traverse";
 import generateModule from "@babel/generator";
-import * as t from "@babel/types";
+import type * as t from "@babel/types";
 
-const traverse: any = (traverseModule as unknown as { default?: typeof traverseModule }).default ?? traverseModule;
-const generate: any = (generateModule as unknown as { default?: typeof generateModule }).default ?? generateModule;
+const traverse: any =
+  (traverseModule as unknown as { default?: typeof traverseModule }).default ?? traverseModule;
+const generate: any =
+  (generateModule as unknown as { default?: typeof generateModule }).default ?? generateModule;
 
 export interface TransformResult {
   readonly code: string;
@@ -22,7 +25,7 @@ export function stripTrace(source: string, filename = "input.ts"): TransformResu
 
   traverse(ast, {
     Program(path: NodePath<t.Program>) {
-      const traceBindings = path.scope.bindings['trace'];
+      const traceBindings = path.scope.bindings["trace"];
       const traceImport = traceBindings?.path;
       if (!traceBindings) return;
 

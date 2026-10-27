@@ -59,7 +59,12 @@ export function aStar(
   const distances = new Map<string, number>([[start, 0]]);
   const previous = new Map<string, string>();
   frontier.push({ node: start, g: 0, f: options.heuristic(start, goal), order: order++ });
-  trace.emit(options.onTrace, { type: "discover", node: start, g: 0, f: options.heuristic(start, goal) });
+  trace.emit(options.onTrace, {
+    type: "discover",
+    node: start,
+    g: 0,
+    f: options.heuristic(start, goal),
+  });
   let expanded = 0;
 
   while (!frontier.isEmpty) {
@@ -92,14 +97,21 @@ export function aStar(
       if (candidate >= (distances.get(edge.to) ?? Infinity)) continue;
 
       const heuristic = options.heuristic(edge.to, goal);
-      if (!Number.isFinite(heuristic)) throw new RangeError("Heuristic must return a finite number");
+      if (!Number.isFinite(heuristic))
+        throw new RangeError("Heuristic must return a finite number");
       const estimate = candidate + heuristic;
       if (!Number.isFinite(estimate)) throw new RangeError("Estimated path cost overflowed");
 
       distances.set(edge.to, candidate);
       previous.set(edge.to, current.node);
       frontier.push({ node: edge.to, g: candidate, f: estimate, order: order++ });
-      trace.emit(options.onTrace, { type: "relax", node: edge.to, from: current.node, g: candidate, f: estimate });
+      trace.emit(options.onTrace, {
+        type: "relax",
+        node: edge.to,
+        from: current.node,
+        g: candidate,
+        f: estimate,
+      });
     }
   }
 

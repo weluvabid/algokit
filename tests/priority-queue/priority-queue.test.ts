@@ -7,16 +7,22 @@ describe("PriorityQueue", () => {
     const values = [7, 1, 9, -2, 4, 4, 0];
     const queue = new PriorityQueue<number>((a, b) => a - b);
     values.forEach((value) => queue.push(value));
-    expect(Array.from({ length: values.length }, () => queue.pop())).toEqual([...values].sort((a, b) => a - b));
+    expect(Array.from({ length: values.length }, () => queue.pop())).toEqual(
+      [...values].sort((a, b) => a - b),
+    );
     expect(queue.pop()).toBeUndefined();
   });
 
   it("matches sorted-array behavior for arbitrary integer sequences", () => {
-    fc.assert(fc.property(fc.array(fc.integer()), (values) => {
-      const queue = new PriorityQueue<number>((a, b) => a - b);
-      values.forEach((value) => queue.push(value));
-      expect(Array.from({ length: values.length }, () => queue.pop())).toEqual([...values].sort((a, b) => a - b));
-    }));
+    fc.assert(
+      fc.property(fc.array(fc.integer()), (values) => {
+        const queue = new PriorityQueue<number>((a, b) => a - b);
+        values.forEach((value) => queue.push(value));
+        expect(Array.from({ length: values.length }, () => queue.pop())).toEqual(
+          [...values].sort((a, b) => a - b),
+        );
+      }),
+    );
   });
 
   it("handles empty and singleton queues", () => {

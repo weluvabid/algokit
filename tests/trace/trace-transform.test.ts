@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-// @ts-ignore
+// @ts-expect-error -- Build-time TS imports are resolved by the build tooling.
 import { stripTrace } from "../../tooling/trace-transform";
 
 describe("stripTrace", () => {

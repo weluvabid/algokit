@@ -16,9 +16,16 @@
   ],
   "scripts": {
     "build": "tsx tooling/build.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "typecheck:all": "tsc --noEmit -p tsconfig.check.json",
     "test": "NODE_OPTIONS=--conditions=development vitest run",
     "test:watch": "NODE_OPTIONS=--conditions=development vitest",
+    "test:coverage": "NODE_OPTIONS=--conditions=development vitest run --coverage",
+    "check:package": "tsx tooling/check-package.ts",
+    "check": "npm run format:check && npm run lint && npm run typecheck:all && npm run test && npm run build && npm run check:package",
     "bench": "vitest bench"
   },
   "devDependencies": {
@@ -26,14 +33,20 @@
     "@babel/parser": "^7.28.4",
     "@babel/traverse": "^7.28.4",
     "@babel/types": "^7.28.4",
+    "@eslint/js": "^9.39.0",
     "@types/babel__generator": "^7.27.0",
     "@types/babel__traverse": "^7.28.0",
     "@types/node": "^22.18.6",
+    "@vitest/coverage-v8": "5.0.5",
+    "esbuild": "0.28.2",
+    "eslint": "^9.39.0",
+    "eslint-config-prettier": "^10.1.8",
     "fast-check": "^4.3.0",
+    "prettier": "^3.6.2",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
-    "vitest": "5.0.5",
-    "esbuild": "0.28.2"
+    "typescript-eslint": "^8.46.0",
+    "vitest": "5.0.5"
   },
   "imports": {
     "#graph": {
