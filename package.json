@@ -10,7 +10,9 @@
     "./trace": "./dist-trace/trace/index.js",
     "./trace-build/graph": "./dist-trace/graph/index.js",
     "./ordered-tree": "./dist/ordered-tree/index.js",
-    "./implicit-treap": "./dist/implicit-treap/index.js"
+    "./implicit-treap": "./dist/implicit-treap/index.js",
+    "./bloom-filter": "./dist/bloom-filter/index.js",
+    "./hyperloglog": "./dist/hyperloglog/index.js"
   },
   "files": [
     "dist",
@@ -80,6 +82,16 @@
       "types": "./src/implicit-treap/index.ts",
       "development": "./src/implicit-treap/index.ts",
       "default": "./dist/implicit-treap/index.js"
+    },
+    "#bloom-filter": {
+      "types": "./src/bloom-filter/index.ts",
+      "development": "./src/bloom-filter/index.ts",
+      "default": "./dist/bloom-filter/index.js"
+    },
+    "#hyperloglog": {
+      "types": "./src/hyperloglog/index.ts",
+      "development": "./src/hyperloglog/index.ts",
+      "default": "./dist/hyperloglog/index.js"
     }
   }
 }
