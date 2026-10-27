@@ -1,9 +1,22 @@
+import * as trace from "#trace";
+import type { TraceSink } from "#trace";
+
+export type PriorityQueueTraceEvent<T> =
+  | { readonly type: "push"; readonly value: T; readonly size: number }
+  | { readonly type: "pop"; readonly value: T; readonly size: number };
+
+export interface PriorityQueueOptions<T> {
+  readonly onTrace?: TraceSink<PriorityQueueTraceEvent<T>>;
+}
+
 export class PriorityQueue<T> {
+  readonly #onTrace: TraceSink<PriorityQueueTraceEvent<T>> | undefined;
   readonly #heap: T[] = [];
   readonly #compare: (a: T, b: T) => number;
 
-  constructor(compare: (a: T, b: T) => number) {
+  constructor(compare: (a: T, b: T) => number, options: PriorityQueueOptions<T> = {}) {
     this.#compare = compare;
+    this.#onTrace = options.onTrace;
   }
 
   get size(): number {
@@ -34,6 +47,7 @@ export class PriorityQueue<T> {
     }
 
     heap[index] = value;
+    trace.emit(this.#onTrace, { type: "push", value, size: heap.length });
   }
 
   pop(): T | undefined {
@@ -45,7 +59,11 @@ export class PriorityQueue<T> {
     const root = heap[0]!;
     const last = heap.pop()!;
 
-    if (size === 1) return root;
+    if (size === 1) {
+      trace.emit(this.#onTrace, { type: "pop", value: root, size: 0 });
+
+      return root;
+    }
 
     let index = 0;
     const newSize = heap.length;
@@ -69,6 +87,7 @@ export class PriorityQueue<T> {
     }
 
     heap[index] = last;
+    trace.emit(this.#onTrace, { type: "pop", value: root, size: heap.length });
 
     return root;
   }

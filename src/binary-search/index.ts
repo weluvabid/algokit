@@ -1,12 +1,18 @@
 import * as trace from "#trace";
 import type { TraceSink } from "#trace";
 
-export interface BinarySearchTraceEvent {
-  readonly type: "probe" | "found" | "miss";
-  readonly low: number;
-  readonly high: number;
-  readonly index?: number;
-}
+export type BinarySearchTraceEvent =
+  | { readonly type: "probe"; readonly low: number; readonly high: number; readonly index: number }
+  | { readonly type: "found"; readonly low: number; readonly high: number; readonly index: number }
+  | { readonly type: "miss"; readonly low: number; readonly high: number }
+  | {
+      readonly type: "bound-probe";
+      readonly bound: "lower" | "upper";
+      readonly low: number;
+      readonly high: number;
+      readonly index: number;
+    }
+  | { readonly type: "bound-found"; readonly bound: "lower" | "upper"; readonly index: number };
 
 export interface BinarySearchOptions<T> {
   readonly compare: (a: T, b: T) => number;
@@ -18,16 +24,20 @@ export function lowerBound<T>(
   values: readonly T[],
   target: T,
   compare: (a: T, b: T) => number,
+  onTrace?: TraceSink<BinarySearchTraceEvent>,
 ): number {
   let low = 0;
   let high = values.length;
 
   while (low < high) {
     const middle = low + Math.floor((high - low) / 2);
+    trace.emit(onTrace, { type: "bound-probe", bound: "lower", low, high, index: middle });
 
     if (compare(values[middle]!, target) < 0) low = middle + 1;
     else high = middle;
   }
+
+  trace.emit(onTrace, { type: "bound-found", bound: "lower", index: low });
 
   return low;
 }
@@ -37,16 +47,20 @@ export function upperBound<T>(
   values: readonly T[],
   target: T,
   compare: (a: T, b: T) => number,
+  onTrace?: TraceSink<BinarySearchTraceEvent>,
 ): number {
   let low = 0;
   let high = values.length;
 
   while (low < high) {
     const middle = low + Math.floor((high - low) / 2);
+    trace.emit(onTrace, { type: "bound-probe", bound: "upper", low, high, index: middle });
 
     if (compare(values[middle]!, target) <= 0) low = middle + 1;
     else high = middle;
   }
+
+  trace.emit(onTrace, { type: "bound-found", bound: "upper", index: low });
 
   return low;
 }

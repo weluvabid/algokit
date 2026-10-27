@@ -2,10 +2,14 @@ import * as trace from "#trace";
 import type { TraceSink } from "#trace";
 import { hash64FNV1a } from "#hash64";
 
+export type BloomFilterTraceEvent =
+  | { readonly type: "add"; readonly bitsSet: number }
+  | { readonly type: "has"; readonly result: boolean };
+
 export interface BloomFilterOptions {
   readonly expectedItems: number;
   readonly falsePositiveRate: number;
-  readonly onTrace?: TraceSink<{ readonly type: "add"; readonly bitsSet: number }>;
+  readonly onTrace?: TraceSink<BloomFilterTraceEvent>;
 }
 
 /** A Bloom filter for strings and byte arrays; false positives are possible, false negatives are not. */
@@ -65,8 +69,14 @@ export class BloomFilter {
     for (let i = 0; i < this.hashCount; i++) {
       const index = Number((first + BigInt(i) * second) % BigInt(this.bitCount));
 
-      if ((this.#bits[index >>> 3]! & (1 << (index & 7))) === 0) return false;
+      if ((this.#bits[index >>> 3]! & (1 << (index & 7))) === 0) {
+        trace.emit(this.#onTrace, { type: "has", result: false });
+
+        return false;
+      }
     }
+
+    trace.emit(this.#onTrace, { type: "has", result: true });
 
     return true;
   }

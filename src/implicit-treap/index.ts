@@ -1,15 +1,18 @@
 import * as trace from "#trace";
 import type { TraceSink } from "#trace";
 
-export interface ImplicitTreapTraceEvent {
-  readonly type: "insert" | "remove" | "set";
-  readonly index: number;
-  readonly size: number;
-}
+export type ImplicitTreapTraceEvent<T = unknown> =
+  | { readonly type: "insert" | "remove" | "set"; readonly index: number; readonly size: number }
+  | {
+      readonly type: "get";
+      readonly index: number;
+      readonly result: T | undefined;
+      readonly size: number;
+    };
 
-export interface ImplicitTreapOptions {
+export interface ImplicitTreapOptions<T = unknown> {
   readonly seed?: number;
-  readonly onTrace?: TraceSink<ImplicitTreapTraceEvent>;
+  readonly onTrace?: TraceSink<ImplicitTreapTraceEvent<T>>;
 }
 
 class Node<T> {
@@ -71,9 +74,9 @@ function merge<T>(left: Node<T> | null, right: Node<T> | null): Node<T> | null {
 export class ImplicitTreap<T> implements Iterable<T> {
   #root: Node<T> | null = null;
   #state: number;
-  readonly #onTrace: TraceSink<ImplicitTreapTraceEvent> | undefined;
+  readonly #onTrace: TraceSink<ImplicitTreapTraceEvent<T>> | undefined;
 
-  constructor(values: Iterable<T> = [], options: ImplicitTreapOptions = {}) {
+  constructor(values: Iterable<T> = [], options: ImplicitTreapOptions<T> = {}) {
     this.#state = (options.seed ?? 0x9e3779b9) >>> 0 || 0x9e3779b9;
     this.#onTrace = options.onTrace;
 
@@ -90,7 +93,11 @@ export class ImplicitTreap<T> implements Iterable<T> {
   }
 
   get(index: number): T | undefined {
-    if (!Number.isInteger(index) || index < 0 || index >= this.size) return undefined;
+    if (!Number.isInteger(index) || index < 0 || index >= this.size) {
+      trace.emit(this.#onTrace, { type: "get", index, result: undefined, size: this.size });
+
+      return undefined;
+    }
 
     let current = this.#root;
     let target = index;
@@ -99,12 +106,17 @@ export class ImplicitTreap<T> implements Iterable<T> {
       const leftSize = sizeOf(current.left);
 
       if (target < leftSize) current = current.left;
-      else if (target === leftSize) return current.value;
-      else {
+      else if (target === leftSize) {
+        trace.emit(this.#onTrace, { type: "get", index, result: current.value, size: this.size });
+
+        return current.value;
+      } else {
         target -= leftSize + 1;
         current = current.right;
       }
     }
+
+    trace.emit(this.#onTrace, { type: "get", index, result: undefined, size: this.size });
 
     return undefined;
   }

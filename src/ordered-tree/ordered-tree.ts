@@ -2,11 +2,15 @@ import * as trace from "#trace";
 import type { TraceSink } from "#trace";
 import { BLACK, RED, Node, colorOf, sizeOf, updateSize } from "./node.js";
 
-export interface OrderedTreeTraceEvent<T> {
-  readonly type: "insert" | "delete" | "rotate-left" | "rotate-right";
-  readonly key: T;
-  readonly size: number;
-}
+export type OrderedTreeTraceEvent<T> =
+  | {
+      readonly type: "insert" | "delete" | "rotate-left" | "rotate-right";
+      readonly key: T;
+      readonly size: number;
+    }
+  | { readonly type: "rank"; readonly key: T; readonly rank: number }
+  | { readonly type: "select"; readonly index: number; readonly result: T | undefined }
+  | { readonly type: "clear"; readonly size: 0 };
 
 export interface OrderedTreeOptions<T> {
   readonly onTrace?: TraceSink<OrderedTreeTraceEvent<T>>;
@@ -135,12 +139,18 @@ export class OrderedTree<T> implements Iterable<T> {
       }
     }
 
+    trace.emit(this.#onTrace, { type: "rank", key, rank });
+
     return rank;
   }
 
   /** Returns the key at a zero-based sorted position, or undefined when out of range. */
   select(index: number): T | undefined {
-    if (!Number.isInteger(index) || index < 0 || index >= this.#size) return undefined;
+    if (!Number.isInteger(index) || index < 0 || index >= this.#size) {
+      trace.emit(this.#onTrace, { type: "select", index, result: undefined });
+
+      return undefined;
+    }
 
     let current = this.#root;
     let target = index;
@@ -149,12 +159,17 @@ export class OrderedTree<T> implements Iterable<T> {
       const leftSize = sizeOf(current.left);
 
       if (target < leftSize) current = current.left;
-      else if (target === leftSize) return current.key;
-      else {
+      else if (target === leftSize) {
+        trace.emit(this.#onTrace, { type: "select", index, result: current.key });
+
+        return current.key;
+      } else {
         target -= leftSize + 1;
         current = current.right;
       }
     }
+
+    trace.emit(this.#onTrace, { type: "select", index, result: undefined });
 
     return undefined;
   }
@@ -176,6 +191,7 @@ export class OrderedTree<T> implements Iterable<T> {
   clear(): void {
     this.#root = null;
     this.#size = 0;
+    trace.emit(this.#onTrace, { type: "clear", size: 0 });
   }
 
   *[Symbol.iterator](): Iterator<T> {

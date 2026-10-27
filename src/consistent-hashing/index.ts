@@ -2,13 +2,18 @@ import * as trace from "#trace";
 import type { TraceSink } from "#trace";
 import { hash64, hash64Parts } from "#hash64";
 
+export type ConsistentHashingTraceEvent =
+  | { readonly type: "node-added"; readonly node: string; readonly ringSize: number }
+  | { readonly type: "node-removed"; readonly node: string; readonly ringSize: number }
+  | {
+      readonly type: "selected";
+      readonly key: string | Uint8Array;
+      readonly node: string | undefined;
+    };
+
 export interface ConsistentHashingOptions {
   readonly virtualNodes?: number;
-  readonly onTrace?: TraceSink<{
-    readonly type: "node-added" | "node-removed";
-    readonly node: string;
-    readonly ringSize: number;
-  }>;
+  readonly onTrace?: TraceSink<ConsistentHashingTraceEvent>;
 }
 
 interface RingEntry {
@@ -65,7 +70,11 @@ export class ConsistentHashing {
   }
 
   getNode(key: string | Uint8Array): string | undefined {
-    if (this.#ring.length === 0) return undefined;
+    if (this.#ring.length === 0) {
+      trace.emit(this.#onTrace, { type: "selected", key, node: undefined });
+
+      return undefined;
+    }
 
     const hash = hash64(key);
     let low = 0;
@@ -78,7 +87,10 @@ export class ConsistentHashing {
       else high = middle;
     }
 
-    return this.#ring[low === this.#ring.length ? 0 : low]!.node;
+    const node = this.#ring[low === this.#ring.length ? 0 : low]!.node;
+    trace.emit(this.#onTrace, { type: "selected", key, node });
+
+    return node;
   }
 
   nodes(): string[] {

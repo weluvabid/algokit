@@ -8,13 +8,9 @@ export interface SortedRun {
   readonly end: number;
 }
 
-export interface MergeTraceEvent {
-  readonly type: "run-detected" | "value-emitted";
-  readonly start?: number;
-  readonly end?: number;
-  readonly source?: number;
-  readonly outputIndex?: number;
-}
+export type MergeTraceEvent =
+  | { readonly type: "run-detected"; readonly start: number; readonly end: number }
+  | { readonly type: "value-emitted"; readonly source: number; readonly outputIndex: number };
 
 export interface MergeOptions<T> {
   readonly compare: (a: T, b: T) => number;

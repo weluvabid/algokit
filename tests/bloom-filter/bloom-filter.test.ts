@@ -45,7 +45,9 @@ describe("BloomFilter", () => {
     const traced = new BloomFilter({
       expectedItems: 100,
       falsePositiveRate: 0.01,
-      onTrace: (event) => events.push(event),
+      onTrace: (event) => {
+        if (event.type === "add") events.push(event);
+      },
     });
 
     filter.add("same");

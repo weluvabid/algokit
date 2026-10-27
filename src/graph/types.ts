@@ -7,13 +7,17 @@ export interface Edge {
 
 export type Graph = ReadonlyMap<string, readonly Edge[]>;
 
-export interface AStarTraceEvent {
-  readonly type: "discover" | "expand" | "relax" | "finish";
-  readonly node: string;
-  readonly from?: string;
-  readonly g?: number;
-  readonly f?: number;
-}
+export type AStarTraceEvent =
+  | { readonly type: "discover"; readonly node: string; readonly g: number; readonly f: number }
+  | { readonly type: "expand"; readonly node: string; readonly g: number; readonly f: number }
+  | {
+      readonly type: "relax";
+      readonly node: string;
+      readonly from: string;
+      readonly g: number;
+      readonly f: number;
+    }
+  | { readonly type: "finish"; readonly node: string; readonly g: number; readonly f: number };
 
 export interface AStarOptions {
   readonly heuristic: (node: string, goal: string) => number;
@@ -26,22 +30,39 @@ export interface AStarResult {
   readonly expanded: number;
 }
 
-export interface TraversalTraceEvent {
-  readonly type: "discover" | "visit";
-  readonly node: string;
-  readonly from?: string;
+export type TraversalTraceEvent =
+  | { readonly type: "discover"; readonly node: string; readonly from?: string }
+  | { readonly type: "visit"; readonly node: string; readonly from?: string };
+
+export type TopologicalSortTraceEvent =
+  | { readonly type: "node-ready"; readonly node: string }
+  | { readonly type: "node-emitted"; readonly node: string; readonly orderIndex: number }
+  | { readonly type: "cycle-detected"; readonly remaining: number };
+
+export interface TopologicalSortOptions {
+  readonly onTrace?: TraceSink<TopologicalSortTraceEvent>;
+}
+
+export type CycleDetectionTraceEvent = TopologicalSortTraceEvent;
+
+export interface CycleDetectionOptions {
+  readonly onTrace?: TraceSink<CycleDetectionTraceEvent>;
 }
 
 export interface TraversalOptions {
   readonly onTrace?: TraceSink<TraversalTraceEvent>;
 }
 
-export interface DijkstraTraceEvent {
-  readonly type: "discover" | "expand" | "relax" | "finish";
-  readonly node: string;
-  readonly from?: string;
-  readonly cost?: number;
-}
+export type DijkstraTraceEvent =
+  | { readonly type: "discover"; readonly node: string; readonly cost: number }
+  | { readonly type: "expand"; readonly node: string; readonly cost: number }
+  | {
+      readonly type: "relax";
+      readonly node: string;
+      readonly from: string;
+      readonly cost: number;
+    }
+  | { readonly type: "finish"; readonly node: string; readonly cost: number };
 
 export interface DijkstraOptions {
   readonly onTrace?: TraceSink<DijkstraTraceEvent>;

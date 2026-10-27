@@ -2,10 +2,19 @@ import * as trace from "#trace";
 import type { TraceSink } from "#trace";
 import { hash64 } from "#hash64";
 
+export type HyperLogLogTraceEvent =
+  | {
+      readonly type: "register-updated";
+      readonly index: number;
+      readonly previous: number;
+      readonly rank: number;
+    }
+  | { readonly type: "add"; readonly estimate: number };
+
 export interface HyperLogLogOptions {
   /** Number of index bits. Higher precision uses more memory and improves accuracy. */
   readonly precision?: number;
-  readonly onTrace?: TraceSink<{ readonly type: "add"; readonly estimate: number }>;
+  readonly onTrace?: TraceSink<HyperLogLogTraceEvent>;
 }
 
 /** HyperLogLog cardinality estimator for strings and byte arrays. */
@@ -34,7 +43,12 @@ export class HyperLogLog {
     const remainder = (hash << BigInt(this.precision)) & 0xffffffffffffffffn;
     const rank = Math.min(64 - this.precision + 1, leadingZeros64(remainder) + 1);
 
-    if (rank > this.#registers[index]!) this.#registers[index] = rank;
+    const previous = this.#registers[index]!;
+
+    if (rank > previous) {
+      this.#registers[index] = rank;
+      trace.emit(this.#onTrace, { type: "register-updated", index, previous, rank });
+    }
 
     trace.emit(this.#onTrace, { type: "add", estimate: this.estimate() });
   }

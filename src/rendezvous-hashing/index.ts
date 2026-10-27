@@ -2,12 +2,12 @@ import * as trace from "#trace";
 import type { TraceSink } from "#trace";
 import { hash64Parts } from "#hash64";
 
+export type RendezvousHashingTraceEvent =
+  | { readonly type: "selected"; readonly key: string; readonly node: string | undefined }
+  | { readonly type: "ranked"; readonly key: string; readonly nodes: readonly string[] };
+
 export interface RendezvousHashingOptions {
-  readonly onTrace?: TraceSink<{
-    readonly type: "selected";
-    readonly key: string;
-    readonly node: string | undefined;
-  }>;
+  readonly onTrace?: TraceSink<RendezvousHashingTraceEvent>;
 }
 
 /** Highest-random-weight (rendezvous) hashing over a supplied node set. */
@@ -49,9 +49,12 @@ export class RendezvousHashing {
       if (node.length === 0) throw new RangeError("node names must not be empty");
     }
 
-    return unique
+    const ranked = unique
       .map((node) => ({ node, score: hash64Parts(key, node) }))
       .sort((a, b) => (a.score > b.score ? -1 : a.score < b.score ? 1 : a.node < b.node ? -1 : 1))
       .map(({ node }) => node);
+    trace.emit(this.#onTrace, { type: "ranked", key, nodes: ranked });
+
+    return ranked;
   }
 }

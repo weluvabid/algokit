@@ -1,6 +1,6 @@
-import type { Graph } from "./types.js";
+import type { CycleDetectionOptions, Graph } from "./types.js";
 import { topologicalSort } from "./topological-sort.js";
 
-export function hasCycle(graph: Graph): boolean {
-  return topologicalSort(graph) === null;
+export function hasCycle(graph: Graph, options: CycleDetectionOptions = {}): boolean {
+  return topologicalSort(graph, options) === null;
 }
