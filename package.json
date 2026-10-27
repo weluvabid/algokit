@@ -1,0 +1,58 @@
+{
+  "name": "@weluvabid/algokit",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Algorithms and data structures with traceable execution.",
+  "exports": {
+    ".": "./dist/index.js",
+    "./priority-queue": "./dist/priority-queue/index.js",
+    "./graph": "./dist/graph/index.js",
+    "./trace": "./dist/trace/index.js",
+    "./trace-build/graph": "./dist-trace/graph/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsx tooling/build.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "NODE_OPTIONS=--conditions=development vitest run",
+    "test:watch": "NODE_OPTIONS=--conditions=development vitest",
+    "bench": "vitest bench"
+  },
+  "devDependencies": {
+    "@babel/generator": "^7.28.3",
+    "@babel/parser": "^7.28.4",
+    "@babel/traverse": "^7.28.4",
+    "@babel/types": "^7.28.4",
+    "@types/babel__generator": "^7.27.0",
+    "@types/babel__traverse": "^7.28.0",
+    "@types/node": "^22.18.6",
+    "fast-check": "^4.3.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vitest": "5.0.5"
+  },
+  "imports": {
+    "#graph": {
+      "types": "./src/graph/index.ts",
+      "development": "./src/graph/index.ts",
+      "default": "./dist/graph/index.js"
+    },
+    "#priority-queue": {
+      "types": "./src/priority-queue/index.ts",
+      "development": "./src/priority-queue/index.ts",
+      "default": "./dist/priority-queue/index.js"
+    },
+    "#trace": {
+      "types": "./src/trace/index.ts",
+      "development": "./src/trace/index.ts",
+      "default": "./dist/trace/index.js"
+    },
+    "#trace/*": {
+      "types": "./src/trace/*.ts",
+      "development": "./src/trace/*.ts",
+      "default": "./dist/trace/*.js"
+    }
+  }
+}

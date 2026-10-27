@@ -1,0 +1,59 @@
+import { parse } from "@babel/parser";
+import traverse from "@babel/traverse";
+import generate from "@babel/generator";
+import * as t from "@babel/types";
+
+export interface TransformResult {
+  readonly code: string;
+  readonly removedCalls: number;
+}
+
+export function stripTrace(source: string, filename = "input.ts"): TransformResult {
+  const ast = parse(source, {
+    sourceType: "module",
+    sourceFilename: filename,
+    plugins: ["typescript"],
+  });
+  const removals = new Set<t.Node>();
+  let removedCalls = 0;
+
+  traverse(ast, {
+    Program(path) {
+      const traceBindings = path.scope.bindings.trace;
+      const traceImport = traceBindings?.path;
+      if (!traceBindings) return;
+
+      if (!traceImport?.isImportNamespaceSpecifier()) {
+        throw new Error(`${filename}: the reserved trace binding must be a namespace import`);
+      }
+
+      for (const reference of traceBindings.referencePaths) {
+        const member = reference.parentPath;
+        const call = member?.parentPath;
+        const statement = call?.parentPath;
+        if (
+          !member?.isMemberExpression() ||
+          member.node.object !== reference.node ||
+          !call?.isCallExpression() ||
+          call.node.callee !== member.node ||
+          !statement?.isExpressionStatement() ||
+          statement.node.expression !== call.node
+        ) {
+          throw new Error(`${filename}: trace references must be standalone trace calls`);
+        }
+        removals.add(statement.node);
+        removedCalls++;
+      }
+
+      removals.add(traceImport.parentPath!.node);
+    },
+  });
+
+  traverse(ast, {
+    enter(path) {
+      if (removals.has(path.node)) path.remove();
+    },
+  });
+
+  return { code: generate(ast, { comments: true }, source).code, removedCalls };
+}

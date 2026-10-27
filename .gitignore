@@ -1,31 +1,26 @@
-IDE
-
+# IDE
 .idea/
 
-Dependencies
-
+# Dependencies
 node_modules/
 
-Build output
-
+# Build output
 dist/
+dist-trace/
 coverage/
 *.tsbuildinfo
 
-Environment
-
+# Environment
 .env
 .env.*
 !.env.example
 
-Logs
-
-.log
-npm-debug.log
+# Logs
+*.log
+npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
 
-OS
-
+# OS
 .DS_Store
 Thumbs.db
