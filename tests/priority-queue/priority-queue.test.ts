@@ -45,14 +45,17 @@ describe("PriorityQueue", () => {
           queue.push(value);
           model.push(value);
           model.sort((a, b) => a - b);
+
           if (index % 3 === 2) {
             expect(queue.pop()).toBe(model.shift());
           }
+
           expect(queue.peek()).toBe(model[0]);
           expect(queue.size).toBe(model.length);
         });
 
         while (model.length > 0) expect(queue.pop()).toBe(model.shift());
+
         expect(queue.isEmpty).toBe(true);
         expect(queue.pop()).toBeUndefined();
       }),

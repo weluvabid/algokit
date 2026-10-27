@@ -5,11 +5,15 @@ import fc from "fast-check";
 describe("HyperLogLog", () => {
   it("estimates cardinality and ignores duplicate values", () => {
     const hll = new HyperLogLog({ precision: 12 });
+
     for (let index = 0; index < 10_000; index++) hll.add(`item-${index}`);
+
     const estimate = hll.estimate();
     expect(estimate).toBeGreaterThan(8_500);
     expect(estimate).toBeLessThan(11_500);
+
     for (let index = 0; index < 10_000; index++) hll.add(`item-${index}`);
+
     expect(hll.estimate()).toBeGreaterThan(8_500);
     expect(hll.estimate()).toBeLessThan(11_500);
   });
@@ -28,7 +32,9 @@ describe("HyperLogLog", () => {
   it("handles hashes whose register remainder has leading zero words", () => {
     for (const precision of [4, 8, 12, 16]) {
       const hll = new HyperLogLog({ precision });
+
       for (let index = 0; index < 2_000; index++) hll.add(`leading-zero-case-${index}`);
+
       expect(Number.isFinite(hll.estimate())).toBe(true);
       expect(hll.estimate()).toBeGreaterThan(0);
     }
@@ -37,18 +43,22 @@ describe("HyperLogLog", () => {
   it("is deterministic and insensitive to repeated values", () => {
     const first = new HyperLogLog({ precision: 10 });
     const second = new HyperLogLog({ precision: 10 });
+
     for (let index = 0; index < 2_000; index++) {
       first.add(`value-${index}`);
       second.add(`value-${index}`);
       second.add(`value-${index}`);
     }
+
     expect(first.estimate()).toBe(second.estimate());
   });
 
   it("estimates several deterministic cardinalities within broad bounds", () => {
     for (const cardinality of [1, 10, 50, 250, 1_000, 5_000]) {
       const hll = new HyperLogLog({ precision: 10 });
+
       for (let index = 0; index < cardinality; index++) hll.add(`cardinality-${index}`);
+
       const estimate = hll.estimate();
       expect(estimate).toBeGreaterThanOrEqual(0);
       expect(estimate).toBeGreaterThan(cardinality * 0.65);

@@ -15,6 +15,7 @@ try {
   });
   const entries = await (await import("node:fs/promises")).readdir(temporaryRoot);
   const tarball = entries.find((entry) => entry.endsWith(".tgz"));
+
   if (!tarball) throw new Error("npm pack did not produce a tarball");
 
   execFileSync(

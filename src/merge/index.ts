@@ -38,6 +38,7 @@ export function detectSortedRuns<T>(
 
   const runs: SortedRun[] = [];
   let start = 0;
+
   for (let index = 1; index < values.length; index++) {
     if (compare(values[index - 1]!, values[index]!) > 0) {
       const run = { start, end: index };
@@ -50,6 +51,7 @@ export function detectSortedRuns<T>(
   const finalRun = { start, end: values.length };
   runs.push(finalRun);
   trace.emit(onTrace, { type: "run-detected", ...finalRun });
+
   return runs;
 }
 
@@ -66,12 +68,14 @@ export function kWayMerge<T>(sequences: readonly (readonly T[])[], options: Merg
 
   sequences.forEach((sequence, source) => {
     totalLength += sequence.length;
+
     if (sequence.length > 0) {
       heap.push({ value: sequence[0]!, source, index: 0, order: order++ });
     }
   });
 
   const output: T[] = [];
+
   while (!heap.isEmpty) {
     const current = heap.pop()!;
     output.push(current.value);
@@ -83,6 +87,7 @@ export function kWayMerge<T>(sequences: readonly (readonly T[])[], options: Merg
 
     const nextIndex = current.index + 1;
     const sequence = sequences[current.source]!;
+
     if (nextIndex < sequence.length) {
       heap.push({
         value: sequence[nextIndex]!,
@@ -94,6 +99,7 @@ export function kWayMerge<T>(sequences: readonly (readonly T[])[], options: Merg
   }
 
   if (output.length !== totalLength) throw new Error("Merge lost input values");
+
   return output;
 }
 
@@ -101,5 +107,6 @@ export function kWayMerge<T>(sequences: readonly (readonly T[])[], options: Merg
 export function mergeSortedRuns<T>(values: readonly T[], options: MergeOptions<T>): T[] {
   const runs = detectSortedRuns(values, options.compare, options.onTrace);
   const sequences = runs.map((run) => values.slice(run.start, run.end));
+
   return kWayMerge(sequences, options);
 }

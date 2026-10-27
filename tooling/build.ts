@@ -71,11 +71,13 @@ try {
     const input = await readFile(declaration, "utf8");
     const transformed = stripTraceDeclarations(input, relative(root, declaration));
     const output = transformed.code;
+
     if (/from\s+["']#trace["']/.test(output)) {
       throw new Error(
         `Performance declaration retains a trace import: ${relative(performanceSource, declaration)}`,
       );
     }
+
     await writeFile(declaration, output);
   }
 
@@ -95,6 +97,7 @@ try {
 
   for (const declaration of declarations) {
     if (declaration.endsWith(".d.ts.map")) continue;
+
     const destination = join(performanceOut, relative(performanceSource, declaration));
     await mkdir(join(destination, ".."), { recursive: true });
     await cp(declaration, destination);
@@ -116,11 +119,13 @@ try {
     logLevel: "info",
   });
   const minifiedTrace = traceOut + "-minified";
+
   for (const path of traceFiles.filter((file) => file.endsWith(".d.ts"))) {
     const destination = join(minifiedTrace, relative(traceOut, path));
     await mkdir(join(destination, ".."), { recursive: true });
     await cp(path, destination);
   }
+
   await rm(traceOut, { recursive: true, force: true });
   await rename(minifiedTrace, traceOut);
 
@@ -132,6 +137,7 @@ try {
   let backedUpTrace = false;
   let installedDist = false;
   let installedTrace = false;
+
   try {
     try {
       await rename(distPath, distBackup);
@@ -139,12 +145,14 @@ try {
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
     }
+
     try {
       await rename(tracePath, traceBackup);
       backedUpTrace = true;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
     }
+
     await rename(performanceOut, distPath);
     installedDist = true;
     await rename(traceOut, tracePath);
@@ -152,8 +160,11 @@ try {
   } catch (error) {
     try {
       if (installedDist) await rm(distPath, { recursive: true, force: true });
+
       if (installedTrace) await rm(tracePath, { recursive: true, force: true });
+
       if (backedUpDist) await rename(distBackup, distPath);
+
       if (backedUpTrace) await rename(traceBackup, tracePath);
     } catch (rollbackError) {
       preserveWork = true;
@@ -162,8 +173,10 @@ try {
         `Build replacement failed and rollback was incomplete; backups remain in ${work}`,
       );
     }
+
     throw error;
   }
+
   await rm(distBackup, { recursive: true, force: true });
   await rm(traceBackup, { recursive: true, force: true });
 } finally {

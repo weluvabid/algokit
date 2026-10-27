@@ -25,6 +25,26 @@ export default tseslint.config(
     rules: {
       "no-console": "error",
       "no-warning-comments": ["error", { terms: ["TODO", "FIXME"], location: "start" }],
+      "padding-line-between-statements": [
+        "error",
+        {
+          blankLine: "always",
+          prev: "const",
+          next: ["if", "switch", "for", "while", "try", "return"],
+        },
+        {
+          blankLine: "always",
+          prev: "let",
+          next: ["if", "switch", "for", "while", "try", "return"],
+        },
+        {
+          blankLine: "always",
+          prev: "expression",
+          next: ["if", "switch", "for", "while", "try"],
+        },
+        { blankLine: "always", prev: ["if", "switch", "for", "while", "try"], next: "*" },
+        { blankLine: "always", prev: "*", next: "return" },
+      ],
       "@typescript-eslint/consistent-type-imports": "error",
       "@typescript-eslint/no-unused-vars": [
         "error",
@@ -37,6 +57,7 @@ export default tseslint.config(
       ],
       "@typescript-eslint/no-floating-promises": "error",
       "@typescript-eslint/no-misused-promises": "error",
+      "@typescript-eslint/switch-exhaustiveness-check": "error",
     },
   },
   prettier,

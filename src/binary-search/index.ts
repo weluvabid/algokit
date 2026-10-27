@@ -21,11 +21,14 @@ export function lowerBound<T>(
 ): number {
   let low = 0;
   let high = values.length;
+
   while (low < high) {
     const middle = low + Math.floor((high - low) / 2);
+
     if (compare(values[middle]!, target) < 0) low = middle + 1;
     else high = middle;
   }
+
   return low;
 }
 
@@ -37,11 +40,14 @@ export function upperBound<T>(
 ): number {
   let low = 0;
   let high = values.length;
+
   while (low < high) {
     const middle = low + Math.floor((high - low) / 2);
+
     if (compare(values[middle]!, target) <= 0) low = middle + 1;
     else high = middle;
   }
+
   return low;
 }
 
@@ -61,14 +67,18 @@ export function binarySearch<T>(
     const middle = low + Math.floor((high - low) / 2);
     trace.emit(options.onTrace, { type: "probe", low, high, index: middle });
     const order = options.compare(values[middle]!, target);
+
     if (order === 0) {
       trace.emit(options.onTrace, { type: "found", low, high, index: middle });
+
       return middle;
     }
+
     if (order < 0) low = middle + 1;
     else high = middle - 1;
   }
 
   trace.emit(options.onTrace, { type: "miss", low, high });
+
   return -low - 1;
 }

@@ -7,7 +7,9 @@ const compare = (a: number, b: number): number => a - b;
 describe("OrderedTree", () => {
   it("keeps unique keys in sorted order and supports rank/select", () => {
     const tree = new OrderedTree(compare);
+
     for (const value of [8, 3, 10, 1, 6, 14, 4, 7, 13]) expect(tree.insert(value)).toBe(true);
+
     expect(tree.insert(6)).toBe(false);
     expect([...tree]).toEqual([1, 3, 4, 6, 7, 8, 10, 13, 14]);
     expect(tree.size).toBe(9);
@@ -27,11 +29,13 @@ describe("OrderedTree", () => {
     const values = [41, 38, 31, 12, 19, 8, 50, 60, 55, 1, 2, 3, 4, 5];
     const model = new Set(values);
     values.forEach((value) => tree.insert(value));
+
     for (const value of [8, 41, 31, 38, 1, 60, 19, 12, 55, 50, 2, 3, 4, 5]) {
       expect(tree.delete(value)).toBe(model.delete(value));
       expect(tree.has(value)).toBe(false);
       expect([...tree]).toEqual([...model].sort(compare));
     }
+
     expect(tree.isEmpty).toBe(true);
     expect(tree.delete(123)).toBe(false);
     expect(tree.select(0)).toBeUndefined();
@@ -44,6 +48,7 @@ describe("OrderedTree", () => {
         (operations) => {
           const tree = new OrderedTree(compare);
           const model = new Set<number>();
+
           for (const [insert, value] of operations) {
             if (insert) {
               expect(tree.insert(value)).toBe(!model.has(value));
@@ -51,12 +56,14 @@ describe("OrderedTree", () => {
             } else {
               expect(tree.delete(value)).toBe(model.delete(value));
             }
+
             const sorted = [...model].sort(compare);
             expect([...tree]).toEqual(sorted);
             expect(tree.size).toBe(sorted.length);
             expect(Array.from({ length: sorted.length }, (_, index) => tree.select(index))).toEqual(
               sorted,
             );
+
             for (const probe of [-101, -50, 0, 50, 101]) {
               expect(tree.rank(probe)).toBe(sorted.filter((entry) => entry < probe).length);
             }
@@ -73,5 +80,23 @@ describe("OrderedTree", () => {
     tree.clear();
     expect(tree.size).toBe(0);
     expect([...tree]).toEqual([]);
+  });
+
+  it("supports descending comparators and clear/repopulate cycles", () => {
+    const tree = new OrderedTree<number>((a, b) => b - a);
+    [2, 8, 4, 1].forEach((value) => tree.insert(value));
+
+    expect([...tree]).toEqual([8, 4, 2, 1]);
+    expect(tree.rank(4)).toBe(1);
+    expect(tree.select(0)).toBe(8);
+
+    tree.clear();
+    expect(tree.isEmpty).toBe(true);
+    expect([...tree]).toEqual([]);
+
+    tree.insert(3);
+    tree.insert(1);
+    expect([...tree]).toEqual([3, 1]);
+    expect(tree.size).toBe(2);
   });
 });

@@ -33,6 +33,7 @@ describe("BloomFilter", () => {
           falsePositiveRate: 0.01,
         });
         values.forEach((value) => filter.add(value));
+
         for (const value of values) expect(filter.has(value)).toBe(true);
       }),
     );
@@ -83,11 +84,15 @@ describe("BloomFilter", () => {
 
   it("keeps observed false positives within a broad deterministic smoke-test bound", () => {
     const filter = new BloomFilter({ expectedItems: 500, falsePositiveRate: 0.02 });
+
     for (let index = 0; index < 500; index++) filter.add(`inserted-${index}`);
+
     let falsePositives = 0;
+
     for (let index = 0; index < 2_000; index++) {
       if (filter.has(`not-inserted-${index}`)) falsePositives++;
     }
+
     expect(falsePositives).toBeLessThan(160);
   });
 });

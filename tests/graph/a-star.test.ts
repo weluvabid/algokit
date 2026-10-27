@@ -49,6 +49,7 @@ describe("aStar", () => {
       {
         heuristic(node) {
           calls.push(node);
+
           return 0;
         },
       },
@@ -90,5 +91,31 @@ describe("aStar", () => {
     expect(() => aStar(new Map([["A", [{ to: "B", cost: -1 }]]]), "A", "B", { heuristic })).toThrow(
       RangeError,
     );
+  });
+
+  it("reopens a node when a better path is found with an inconsistent heuristic", () => {
+    const graphWithInconsistentHeuristic: Graph = new Map([
+      [
+        "S",
+        [
+          { to: "A", cost: 2 },
+          { to: "B", cost: 1 },
+        ],
+      ],
+      ["A", [{ to: "G", cost: 2 }]],
+      [
+        "B",
+        [
+          { to: "A", cost: 0.5 },
+          { to: "G", cost: 100 },
+        ],
+      ],
+      ["G", []],
+    ]);
+    const result = aStar(graphWithInconsistentHeuristic, "S", "G", {
+      heuristic: (node) => (node === "B" ? 2.5 : 0),
+    });
+
+    expect(result).toMatchObject({ path: ["S", "B", "A", "G"], cost: 3.5 });
   });
 });

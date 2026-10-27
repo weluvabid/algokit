@@ -19,12 +19,15 @@ export class BloomFilter {
 
   constructor(options: BloomFilterOptions) {
     const { expectedItems, falsePositiveRate } = options;
+
     if (!Number.isInteger(expectedItems) || expectedItems <= 0) {
       throw new RangeError("expectedItems must be a positive integer");
     }
+
     if (!(falsePositiveRate > 0 && falsePositiveRate < 1)) {
       throw new RangeError("falsePositiveRate must be between zero and one");
     }
+
     this.bitCount = Math.max(
       8,
       Math.ceil((-expectedItems * Math.log(falsePositiveRate)) / Math.LN2 ** 2),
@@ -40,24 +43,31 @@ export class BloomFilter {
 
   add(value: string | Uint8Array): void {
     const [first, second] = this.#hashPair(value);
+
     for (let i = 0; i < this.hashCount; i++) {
       const index = Number((first + BigInt(i) * second) % BigInt(this.bitCount));
       const byteIndex = index >>> 3;
       const mask = 1 << (index & 7);
       const previous = this.#bits[byteIndex]!;
+
       if ((previous & mask) === 0) this.#bitsSet++;
+
       this.#bits[byteIndex] = previous | mask;
     }
+
     this.#itemsAdded++;
     trace.emit(this.#onTrace, { type: "add", bitsSet: this.bitCountSet });
   }
 
   has(value: string | Uint8Array): boolean {
     const [first, second] = this.#hashPair(value);
+
     for (let i = 0; i < this.hashCount; i++) {
       const index = Number((first + BigInt(i) * second) % BigInt(this.bitCount));
+
       if ((this.#bits[index >>> 3]! & (1 << (index & 7))) === 0) return false;
     }
+
     return true;
   }
 
@@ -69,6 +79,7 @@ export class BloomFilter {
     const hash = hash64FNV1a(value);
     const first = hash & 0xffffffffn;
     const second = ((hash >> 32n) | 1n) & 0xffffffffn;
+
     return [first, second];
   }
 }

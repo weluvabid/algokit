@@ -9,7 +9,9 @@ function walk(node: ts.Node, visit: (node: ts.Node) => void): void {
 
 function entityNameRoot(name: ts.EntityName): string | undefined {
   let root = name;
+
   while (ts.isQualifiedName(root)) root = root.left;
+
   return ts.isIdentifier(root) ? root.text : undefined;
 }
 
@@ -18,25 +20,31 @@ function typeReferenceNames(node: ts.Node): Set<string> {
   walk(node, (child) => {
     if (ts.isTypeReferenceNode(child)) {
       const name = entityNameRoot(child.typeName);
+
       if (name) names.add(name);
     } else if (ts.isTypeQueryNode(child)) {
       const name = entityNameRoot(child.exprName);
+
       if (name) names.add(name);
     } else if (ts.isExpressionWithTypeArguments(child) && ts.isIdentifier(child.expression)) {
       names.add(child.expression.text);
     }
   });
+
   return names;
 }
 
 function importedNames(clause: ts.ImportClause): Set<string> {
   const names = new Set<string>();
+
   if (clause.name) names.add(clause.name.text);
+
   if (clause.namedBindings && ts.isNamespaceImport(clause.namedBindings)) {
     names.add(clause.namedBindings.name.text);
   } else if (clause.namedBindings && ts.isNamedImports(clause.namedBindings)) {
     for (const element of clause.namedBindings.elements) names.add(element.name.text);
   }
+
   return names;
 }
 
@@ -47,6 +55,7 @@ function typeDeclarationName(statement: ts.Statement): string | undefined {
   ) {
     return statement.name.text;
   }
+
   return undefined;
 }
 
@@ -73,6 +82,7 @@ export function stripTraceDeclarations(
       statement.importClause
     ) {
       traceImports.add(statement);
+
       for (const name of importedNames(statement.importClause)) traceNames.add(name);
     }
   }
@@ -82,21 +92,29 @@ export function stripTraceDeclarations(
   }
 
   const declarations = new Map<string, ts.Statement>();
+
   for (const statement of sourceFile.statements) {
     const name = typeDeclarationName(statement);
+
     if (name) declarations.set(name, statement);
   }
 
   const dependsOnTrace = (node: ts.Node, seen = new Set<string>()): boolean => {
     for (const name of typeReferenceNames(node)) {
       if (traceNames.has(name)) return true;
+
       if (seen.has(name)) continue;
+
       const declaration = declarations.get(name);
+
       if (!declaration) continue;
+
       const nextSeen = new Set(seen);
       nextSeen.add(name);
+
       if (dependsOnTrace(declaration, nextSeen)) return true;
     }
+
     return false;
   };
 
@@ -107,11 +125,15 @@ export function stripTraceDeclarations(
   walk(sourceFile, (node) => {
     const members =
       ts.isInterfaceDeclaration(node) || ts.isTypeLiteralNode(node) ? node.members : undefined;
+
     if (!members) return;
+
     for (const member of members) {
       if (!dependsOnTrace(member)) continue;
+
       removedMembers.add(member);
       removedMemberCount++;
+
       for (const name of typeReferenceNames(member)) {
         if (!traceNames.has(name)) candidateNames.add(name);
       }
@@ -120,11 +142,15 @@ export function stripTraceDeclarations(
 
   const removedDeclarations = new Set<string>();
   let changed = true;
+
   while (changed) {
     changed = false;
+
     for (const name of candidateNames) {
       if (removedDeclarations.has(name)) continue;
+
       const declaration = declarations.get(name);
+
       if (!declaration) continue;
 
       let referencedOutsideRemovedMembers = false;
@@ -136,10 +162,13 @@ export function stripTraceDeclarations(
             !ts.isExpressionWithTypeArguments(node))
         )
           return;
+
         let ancestor: ts.Node | undefined = node;
         let insideRemovedDeclaration = false;
+
         while (ancestor && ancestor !== sourceFile) {
           if (removedMembers.has(ancestor)) return;
+
           if (
             (ts.isInterfaceDeclaration(ancestor) || ts.isTypeAliasDeclaration(ancestor)) &&
             removedDeclarations.has(ancestor.name.text)
@@ -147,9 +176,12 @@ export function stripTraceDeclarations(
             insideRemovedDeclaration = true;
             break;
           }
+
           ancestor = ancestor.parent;
         }
+
         if (insideRemovedDeclaration) return;
+
         const referenceName = ts.isTypeReferenceNode(node)
           ? entityNameRoot(node.typeName)
           : ts.isTypeQueryNode(node)
@@ -157,19 +189,23 @@ export function stripTraceDeclarations(
             : ts.isIdentifier(node.expression)
               ? node.expression.text
               : undefined;
+
         if (referenceName === name) {
           referencedOutsideRemovedMembers = true;
         }
       });
 
       if (referencedOutsideRemovedMembers) continue;
+
       removedDeclarations.add(name);
+
       for (const childName of typeReferenceNames(declaration)) {
         if (!traceNames.has(childName) && !candidateNames.has(childName)) {
           candidateNames.add(childName);
           changed = true;
         }
       }
+
       changed = true;
     }
   }
@@ -178,9 +214,12 @@ export function stripTraceDeclarations(
     (context) => {
       const visit: ts.Visitor = (node) => {
         if (removedMembers.has(node)) return undefined;
+
         if (ts.isInterfaceDeclaration(node)) {
           if (removedDeclarations.has(node.name.text)) return undefined;
+
           const members = node.members.filter((member) => !removedMembers.has(member));
+
           return context.factory.updateInterfaceDeclaration(
             node,
             node.modifiers,
@@ -190,15 +229,18 @@ export function stripTraceDeclarations(
             members,
           );
         }
+
         if (ts.isTypeAliasDeclaration(node) && removedDeclarations.has(node.name.text)) {
           return undefined;
         }
+
         if (ts.isFunctionDeclaration(node)) {
           // Preserve ordinary parameters whose option types can be sanitized
           // by removing trace-only members from their declarations.
           const parameters = node.parameters.filter(
             (parameter) => ![...typeReferenceNames(parameter)].some((name) => traceNames.has(name)),
           );
+
           return context.factory.updateFunctionDeclaration(
             node,
             node.modifiers,
@@ -210,6 +252,7 @@ export function stripTraceDeclarations(
             node.body,
           );
         }
+
         if (ts.isTypeLiteralNode(node)) {
           return context.factory.updateTypeLiteralNode(
             node,
@@ -218,9 +261,12 @@ export function stripTraceDeclarations(
             ),
           );
         }
+
         if (ts.isImportDeclaration(node) && traceImports.has(node)) return undefined;
+
         return ts.visitEachChild(node, visit, context);
       };
+
       return (node) => ts.visitNode(node, visit) as ts.SourceFile;
     },
   ]);
@@ -229,17 +275,20 @@ export function stripTraceDeclarations(
   transformed.dispose();
   const outputFile = ts.createSourceFile(filename, output, ts.ScriptTarget.Latest, true);
   let remainingTraceType: string | undefined;
+
   for (const name of typeReferenceNames(outputFile)) {
     if (traceNames.has(name)) {
       remainingTraceType = name;
       break;
     }
   }
+
   if (remainingTraceType) {
     throw new Error(
       `${filename}: trace type ${remainingTraceType} remains outside a removable declaration member`,
     );
   }
+
   return {
     code: output,
     removedMembers: removedMemberCount,

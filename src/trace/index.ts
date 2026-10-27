@@ -12,6 +12,7 @@ export function emit<E>(sink: TraceSink<E> | undefined, event: E): void {
 
 export function createTraceRecorder<E>(): TraceRecorder<E> {
   const events: E[] = [];
+
   return {
     get events() {
       return events;

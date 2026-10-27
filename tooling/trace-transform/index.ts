@@ -4,7 +4,6 @@ import traverseModule from "@babel/traverse";
 import generateModule from "@babel/generator";
 import type * as t from "@babel/types";
 
-// Safely extract the exact function type from the module definition
 type TraverseFn = typeof traverseModule extends { default: infer T } ? T : typeof traverseModule;
 type GenerateFn = typeof generateModule extends { default: infer T } ? T : typeof generateModule;
 
@@ -31,6 +30,7 @@ export function stripTrace(source: string, filename = "input.ts"): TransformResu
     Program(path: NodePath<t.Program>) {
       const traceBindings = path.scope.bindings["trace"];
       const traceImport = traceBindings?.path;
+
       if (!traceBindings) return;
 
       if (!traceImport?.isImportNamespaceSpecifier()) {
@@ -41,6 +41,7 @@ export function stripTrace(source: string, filename = "input.ts"): TransformResu
         const member = reference.parentPath;
         const call = member?.parentPath;
         const statement = call?.parentPath;
+
         if (
           !member?.isMemberExpression() ||
           member.node.object !== reference.node ||
@@ -51,6 +52,7 @@ export function stripTrace(source: string, filename = "input.ts"): TransformResu
         ) {
           throw new Error(`${filename}: trace references must be standalone trace calls`);
         }
+
         removals.add(statement.node);
         removedCalls++;
       }

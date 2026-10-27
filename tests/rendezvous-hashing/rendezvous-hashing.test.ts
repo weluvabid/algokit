@@ -19,6 +19,7 @@ describe("RendezvousHashing", () => {
   it("adding a node only changes keys that select the new node", () => {
     const original = ["node-a", "node-b", "node-c"];
     const expanded = [...original, "node-d"];
+
     for (let index = 0; index < 500; index++) {
       const key = `key-${index}`;
       const before = hashing.getNode(key, original);
@@ -48,6 +49,7 @@ describe("RendezvousHashing", () => {
 
   it("preserves existing winners when a non-winning node is added", () => {
     const nodes = ["node-a", "node-b", "node-c"];
+
     for (let index = 0; index < 500; index++) {
       const key = `reassignment-${index}`;
       const winner = hashing.getNode(key, nodes)!;

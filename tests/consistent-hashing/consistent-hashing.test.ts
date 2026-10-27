@@ -30,8 +30,10 @@ describe("ConsistentHashing", () => {
       Array.from({ length: 500 }, (_, i) => `key-${i}`).map((key) => [key, ring.getNode(key)]),
     );
     ring.removeNode("b");
+
     for (const [key, oldNode] of before) {
       const nextNode = ring.getNode(key);
+
       if (oldNode !== "b") expect(nextNode).toBe(oldNode);
       else expect(nextNode).not.toBe("b");
     }
@@ -51,6 +53,7 @@ describe("ConsistentHashing", () => {
     const second = new ConsistentHashing({ virtualNodes: 64 });
     ["a", "b", "c", "d"].forEach((node) => first.addNode(node));
     ["d", "b", "a", "c"].forEach((node) => second.addNode(node));
+
     for (let index = 0; index < 300; index++) {
       const key = `key-${index}`;
       expect(first.getNode(key)).toBe(second.getNode(key));
@@ -62,11 +65,13 @@ describe("ConsistentHashing", () => {
     const nodes = ["a", "b", "c", "d"];
     nodes.forEach((node) => ring.addNode(node));
     const counts = new Map(nodes.map((node) => [node, 0]));
+
     for (let index = 0; index < 4_000; index++) {
       const node = ring.getNode(`distribution-key-${index}`);
       expect(node).toBeDefined();
       counts.set(node!, counts.get(node!)! + 1);
     }
+
     for (const count of counts.values()) {
       expect(count).toBeGreaterThan(500);
       expect(count).toBeLessThan(1_500);

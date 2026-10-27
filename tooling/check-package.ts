@@ -11,12 +11,15 @@ const packageJson = JSON.parse(await readFile(join(root, "package.json"), "utf8"
 
 for (const [name, target] of Object.entries(packageJson.exports)) {
   const path = join(root, target);
+
   try {
     await stat(path);
   } catch {
     throw new Error(`Package export ${name} points to missing file: ${target}`);
   }
+
   const declaration = path.replace(/\.js$/, ".d.ts");
+
   try {
     await stat(declaration);
   } catch {
@@ -30,10 +33,13 @@ await assertPerformanceDistribution(join(root, "dist"));
 
 const traceFiles = await filesUnder(join(root, "dist-trace"));
 const traceJavascript = traceFiles.filter((path) => path.endsWith(".js"));
+
 if (traceJavascript.length === 0)
   throw new Error("Trace distribution contains no JavaScript files");
+
 for (const path of traceJavascript) {
   const contents = await readFile(path, "utf8");
+
   if (contents.split("\n").length > 2) {
     throw new Error(`Trace JavaScript does not appear minified: ${relative(root, path)}`);
   }
@@ -76,6 +82,7 @@ const traceResult = traceModule.aStar(graph, "A", "D", {
   heuristic: () => 0,
   onTrace: recorder.emit,
 });
+
 if (
   performanceResult.path?.join("\0") !== traceResult.path?.join("\0") ||
   performanceResult.cost !== traceResult.cost ||
@@ -83,6 +90,7 @@ if (
 ) {
   throw new Error("Performance and trace distributions returned different A* results");
 }
+
 if (recorder.events.length === 0) {
   throw new Error("Trace distribution did not emit trace events");
 }

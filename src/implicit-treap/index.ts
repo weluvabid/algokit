@@ -33,28 +33,37 @@ function update<T>(node: Node<T>): void {
 
 function split<T>(root: Node<T> | null, count: number): [Node<T> | null, Node<T> | null] {
   if (root === null) return [null, null];
+
   if (sizeOf(root.left) >= count) {
     const [left, right] = split(root.left, count);
     root.left = right;
     update(root);
+
     return [left, root];
   }
+
   const [left, right] = split(root.right, count - sizeOf(root.left) - 1);
   root.right = left;
   update(root);
+
   return [root, right];
 }
 
 function merge<T>(left: Node<T> | null, right: Node<T> | null): Node<T> | null {
   if (left === null) return right;
+
   if (right === null) return left;
+
   if (left.priority >= right.priority) {
     left.right = merge(left.right, right);
     update(left);
+
     return left;
   }
+
   right.left = merge(left, right.left);
   update(right);
+
   return right;
 }
 
@@ -67,6 +76,7 @@ export class ImplicitTreap<T> implements Iterable<T> {
   constructor(values: Iterable<T> = [], options: ImplicitTreapOptions = {}) {
     this.#state = (options.seed ?? 0x9e3779b9) >>> 0 || 0x9e3779b9;
     this.#onTrace = options.onTrace;
+
     for (const value of values)
       this.#root = merge(this.#root, new Node(value, this.#nextPriority()));
   }
@@ -81,10 +91,13 @@ export class ImplicitTreap<T> implements Iterable<T> {
 
   get(index: number): T | undefined {
     if (!Number.isInteger(index) || index < 0 || index >= this.size) return undefined;
+
     let current = this.#root;
     let target = index;
+
     while (current !== null) {
       const leftSize = sizeOf(current.left);
+
       if (target < leftSize) current = current.left;
       else if (target === leftSize) return current.value;
       else {
@@ -92,6 +105,7 @@ export class ImplicitTreap<T> implements Iterable<T> {
         current = current.right;
       }
     }
+
     return undefined;
   }
 
@@ -101,6 +115,7 @@ export class ImplicitTreap<T> implements Iterable<T> {
     const previous = node.value;
     node.value = value;
     trace.emit(this.#onTrace, { type: "set", index, size: this.size });
+
     return previous;
   }
 
@@ -120,9 +135,12 @@ export class ImplicitTreap<T> implements Iterable<T> {
     this.#assertExistingIndex(index);
     const [left, rest] = split(this.#root, index);
     const [removed, right] = split(rest, 1);
+
     if (removed === null) throw new Error("Treap index invariant violated");
+
     this.#root = merge(left, right);
     trace.emit(this.#onTrace, { type: "remove", index, size: this.size });
+
     return removed.value;
   }
 
@@ -133,11 +151,13 @@ export class ImplicitTreap<T> implements Iterable<T> {
   *[Symbol.iterator](): Iterator<T> {
     const stack: Node<T>[] = [];
     let current = this.#root;
+
     while (current !== null || stack.length > 0) {
       while (current !== null) {
         stack.push(current);
         current = current.left;
       }
+
       current = stack.pop()!;
       yield current.value;
       current = current.right;
@@ -147,8 +167,10 @@ export class ImplicitTreap<T> implements Iterable<T> {
   #nodeAt(index: number): Node<T> | null {
     let current = this.#root;
     let target = index;
+
     while (current !== null) {
       const leftSize = sizeOf(current.left);
+
       if (target < leftSize) current = current.left;
       else if (target === leftSize) return current;
       else {
@@ -156,6 +178,7 @@ export class ImplicitTreap<T> implements Iterable<T> {
         current = current.right;
       }
     }
+
     return null;
   }
 
@@ -175,6 +198,7 @@ export class ImplicitTreap<T> implements Iterable<T> {
     this.#state ^= this.#state << 13;
     this.#state ^= this.#state >>> 17;
     this.#state ^= this.#state << 5;
+
     return this.#state >>> 0;
   }
 }

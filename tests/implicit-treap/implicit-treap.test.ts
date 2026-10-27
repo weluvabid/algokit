@@ -24,6 +24,7 @@ describe("ImplicitTreap", () => {
         (operations) => {
           const treap = new ImplicitTreap<number>([], { seed: 12345 });
           const model: number[] = [];
+
           for (const [operation, value] of operations) {
             if (operation === 0 || model.length === 0) {
               const index = Math.abs(value) % (model.length + 1);
@@ -40,6 +41,7 @@ describe("ImplicitTreap", () => {
               const index = Math.abs(value) % model.length;
               expect(treap.get(index)).toBe(model[index]);
             }
+
             expect(treap.toArray()).toEqual(model);
             expect(treap.size).toBe(model.length);
           }
