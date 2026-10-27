@@ -60,4 +60,4 @@ for (const path of traceJavascript) {
   }
 }
 
-console.log("Package exports and distribution integrity verified");
+process.stdout.write("Package exports and distribution integrity verified\n");

@@ -21,6 +21,8 @@ describe("stripTrace", () => {
 
   it("rejects trace references that cannot be safely removed", () => {
     const source = `import * as trace from "./trace.js";\nconst event = trace.create();`;
-    expect(() => stripTrace(source)).toThrow(/standalone trace calls/);
+    expect(() => {
+      stripTrace(source);
+    }).toThrow(/standalone trace calls/);
   });
 });

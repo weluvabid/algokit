@@ -48,7 +48,10 @@ try {
 
   for (const path of performanceJavascript) {
     const input = await readFile(path, "utf8");
-    const transformed = stripTrace(input, relative(root, path));
+    const transformed: { code: string; removedCalls: number } = stripTrace(
+      input,
+      relative(root, path),
+    );
     removedCalls += transformed.removedCalls;
     await writeFile(path, transformed.code);
   }
