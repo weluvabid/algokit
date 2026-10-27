@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import fc from "fast-check";
 import { hash64, hash64FNV1a, hash64Parts, mix64 } from "#hash64";
 
 describe("shared 64-bit hashing", () => {
@@ -28,5 +29,26 @@ describe("shared 64-bit hashing", () => {
     expect(hash64Parts("key\0node", "x")).not.toBe(hash64Parts("key", "node\0x"));
     expect(hash64Parts("", "value")).not.toBe(hash64Parts("value", ""));
     expect(hash64Parts("key", "node")).toBe(hash64Parts("key", "node"));
+  });
+
+  it("is deterministic and returns unsigned 64-bit values for arbitrary strings", () => {
+    fc.assert(
+      fc.property(fc.string(), (value) => {
+        const first = hash64(value);
+        expect(hash64(value)).toBe(first);
+        expect(first).toBeGreaterThanOrEqual(0n);
+        expect(first).toBeLessThanOrEqual(0xffffffffffffffffn);
+      }),
+    );
+  });
+
+  it("distinguishes common ambiguous composite-input shapes", () => {
+    fc.assert(
+      fc.property(fc.string(), fc.string(), fc.string(), (a, b, c) => {
+        if (a.length > 0 && b.length > 0 && c.length > 0) {
+          expect(hash64Parts(a + b, c)).not.toBe(hash64Parts(a, b + c));
+        }
+      }),
+    );
   });
 });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import fc from "fast-check";
 import { detectSortedRuns, kWayMerge, mergeSortedRuns } from "#merge";
 
 const compare = (a: number, b: number): number => a - b;
@@ -39,5 +40,35 @@ describe("merge utilities", () => {
     ).toEqual([1, 2, 3, 4, 5]);
     expect(events).toContain("run-detected");
     expect(events).toContain("value-emitted");
+  });
+
+  it("matches flatten-and-sort for arbitrary collections of sorted sequences", () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.array(fc.integer(), { maxLength: 30 }), { maxLength: 20 }),
+        (sequences) => {
+          const sorted = sequences.map((sequence) => [...sequence].sort(compare));
+          const expected = sorted.flat().sort(compare);
+          expect(kWayMerge(sorted, { compare })).toEqual(expected);
+        },
+      ),
+    );
+  });
+
+  it("matches a reference sort for arbitrary natural-run input", () => {
+    fc.assert(
+      fc.property(fc.array(fc.integer(), { maxLength: 200 }), (values) => {
+        const original = [...values];
+        expect(mergeSortedRuns(values, { compare })).toEqual([...values].sort(compare));
+        expect(values).toEqual(original);
+      }),
+    );
+  });
+
+  it("supports custom comparators and object values", () => {
+    const values = [{ id: 5 }, { id: 1 }, { id: 4 }, { id: 2 }];
+    const result = mergeSortedRuns(values, { compare: (a, b) => a.id - b.id });
+    expect(result.map(({ id }) => id)).toEqual([1, 2, 4, 5]);
+    expect(values.map(({ id }) => id)).toEqual([5, 1, 4, 2]);
   });
 });
