@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { stripTrace } from "../../tooling/trace-transform/index.js";
+// @ts-ignore
+import { stripTrace } from "../../tooling/trace-transform";
 
 describe("stripTrace", () => {
   it("removes namespace trace calls and their import", () => {

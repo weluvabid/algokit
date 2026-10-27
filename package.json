@@ -11,7 +11,8 @@
     "./trace-build/graph": "./dist-trace/graph/index.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "dist-trace"
   ],
   "scripts": {
     "build": "tsx tooling/build.ts",
@@ -31,7 +32,8 @@
     "fast-check": "^4.3.0",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
-    "vitest": "5.0.5"
+    "vitest": "5.0.5",
+    "esbuild": "0.28.2"
   },
   "imports": {
     "#graph": {

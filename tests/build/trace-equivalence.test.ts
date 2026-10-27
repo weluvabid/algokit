@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFile } from "node:fs/promises";
-import { stripTrace } from "../../tooling/trace-transform/index.js";
+// @ts-ignore
+import { stripTrace } from "../../tooling/trace-transform";
 
 describe("performance transform proof of concept", () => {
   it("strips instrumentation without changing computational statements", async () => {
