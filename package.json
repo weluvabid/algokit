@@ -26,16 +26,17 @@
     "build": "tsx tooling/build.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "eslint .",
+    "lint": "npm run build && npm run lint:only",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "typecheck:all": "tsc --noEmit -p tsconfig.check.json",
     "test": "NODE_OPTIONS=--conditions=development vitest run",
     "test:watch": "NODE_OPTIONS=--conditions=development vitest",
     "test:coverage": "NODE_OPTIONS=--conditions=development vitest run --coverage",
     "check:package": "tsx tooling/check-package.ts",
-    "check": "npm run format:check && npm run lint && npm run typecheck:all && npm test && npm run build && npm run check:package && npm run check:consumer",
+    "check": "npm run format:check && npm run build && npm run lint:only && npm run typecheck:all && npm test && npm run check:package && npm run check:consumer",
     "bench": "npm run build && tsx benchmarks/core.bench.ts",
-    "check:consumer": "tsx tooling/check-consumer.ts"
+    "check:consumer": "tsx tooling/check-consumer.ts",
+    "lint:only": "eslint ."
   },
   "devDependencies": {
     "@babel/generator": "^7.28.3",
